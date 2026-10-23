@@ -1,0 +1,6 @@
+student_name,institution_student_id,identity_reference,date_of_birth,gender,program_code,admission_cycle,admission_category,admission_status,nri_category,oci_status,foreign_national_status,supernumerary_category
+Tanvi Shah,IIT-CS-101,DEMO-APAAR-8001,2005-01-14,Female,CS-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Rishi Saxena,IIT-CS-102,DEMO-APAAR-8002,2005-04-20,Male,CS-UG-2026,2026-27,obc,admitted,not_applicable,not_applicable,not_applicable,none
+Ishaan Kapoor,IIT-EE-103,DEMO-APAAR-8003,2005-07-11,Male,EE-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Deepa Sundaram,IIT-EE-104,DEMO-APAAR-8004,2005-09-02,Female,EE-UG-2026,2026-27,ews,admitted,not_applicable,not_applicable,not_applicable,none
+Harsh Vardhan,IIT-ME-105,DEMO-APAAR-8005,2005-12-19,Male,ME-UG-2026,2026-27,sc,admitted,not_applicable,not_applicable,not_applicable,none

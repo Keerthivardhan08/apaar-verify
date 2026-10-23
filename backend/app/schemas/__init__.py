@@ -1,0 +1,98 @@
+from app.schemas.common import MessageResponse, PaginatedResponse
+from app.schemas.auth import (
+    LoginRequest,
+    TokenResponse,
+    UserRoleOut,
+    UserOut,
+    LoginResponse,
+    RefreshRequest,
+)
+from app.schemas.institution import (
+    InstitutionBase,
+    InstitutionCreate,
+    InstitutionUpdate,
+    InstitutionOut,
+    InstitutionStatsOut,
+    ProgramBase,
+    ProgramCreate,
+    ProgramOut,
+    IntakeLimitBase,
+    IntakeLimitCreate,
+    IntakeLimitOut,
+)
+from app.schemas.student import (
+    StudentRecordBase,
+    StudentRecordCreate,
+    StudentRecordUpdate,
+    CorrectionRequestCreate,
+    StudentRecordVersionOut,
+    StudentRecordOut,
+    StudentRecordListOut,
+)
+from app.schemas.upload import (
+    UploadBatchOut,
+    UploadCommitResponse,
+)
+from app.schemas.validation import (
+    ValidationIssueOut,
+    ReviewDecisionCreate,
+    ReviewDecisionOut,
+    AssignIssueRequest,
+    RunValidationRequest,
+)
+from app.schemas.dashboard import (
+    DashboardSummaryOut,
+    IntakeDashboardItem,
+    IntakeDashboardOut,
+)
+from app.schemas.verification import (
+    VerificationRequestCreate,
+    VerifyTokenRequest,
+    RevokeCredentialRequest,
+    VerificationCredentialOut,
+    VerificationResultOut,
+)
+
+__all__ = [
+    "MessageResponse",
+    "PaginatedResponse",
+    "LoginRequest",
+    "TokenResponse",
+    "UserRoleOut",
+    "UserOut",
+    "LoginResponse",
+    "RefreshRequest",
+    "InstitutionBase",
+    "InstitutionCreate",
+    "InstitutionUpdate",
+    "InstitutionOut",
+    "InstitutionStatsOut",
+    "ProgramBase",
+    "ProgramCreate",
+    "ProgramOut",
+    "IntakeLimitBase",
+    "IntakeLimitCreate",
+    "IntakeLimitOut",
+    "StudentRecordBase",
+    "StudentRecordCreate",
+    "StudentRecordUpdate",
+    "CorrectionRequestCreate",
+    "StudentRecordVersionOut",
+    "StudentRecordOut",
+    "StudentRecordListOut",
+    "UploadBatchOut",
+    "UploadCommitResponse",
+    "ValidationIssueOut",
+    "ReviewDecisionCreate",
+    "ReviewDecisionOut",
+    "AssignIssueRequest",
+    "RunValidationRequest",
+    "DashboardSummaryOut",
+    "IntakeDashboardItem",
+    "IntakeDashboardOut",
+    "VerificationRequestCreate",
+    "VerifyTokenRequest",
+    "RevokeCredentialRequest",
+    "VerificationCredentialOut",
+    "VerificationResultOut",
+]

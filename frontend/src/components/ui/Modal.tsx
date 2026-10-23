@@ -1,0 +1,123 @@
+import React, { useEffect } from 'react';
+import { X } from 'lucide-react';
+import Button from './Button';
+
+export interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: React.ReactNode;
+  subtitle?: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  onConfirm?: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  isConfirmLoading?: boolean;
+  confirmVariant?: 'primary' | 'danger' | 'success';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
+}
+
+export const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+  onConfirm,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  isConfirmLoading = false,
+  confirmVariant = 'primary',
+  maxWidth = 'md',
+}) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const maxWidthStyles = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-xl',
+    '2xl': 'max-w-2xl',
+    '3xl': 'max-w-3xl',
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Modal Dialog */}
+      <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+        <div
+          className={`relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 w-full ${maxWidthStyles[maxWidth]} border border-gray-200`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between p-5 border-b border-gray-100 bg-gray-50/50">
+            <div>
+              {typeof title === 'string' ? (
+                <h3 className="text-lg font-semibold text-gray-900 leading-6">{title}</h3>
+              ) : (
+                title
+              )}
+              {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 rounded-lg p-1.5 hover:bg-gray-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="p-6">{children}</div>
+
+          {/* Footer */}
+          {footer !== undefined ? (
+            footer
+          ) : onConfirm ? (
+            <div className="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-2 border-t border-gray-100">
+              <Button
+                variant={confirmVariant}
+                onClick={onConfirm}
+                isLoading={isConfirmLoading}
+              >
+                {confirmLabel}
+              </Button>
+              <Button variant="secondary" onClick={onClose} disabled={isConfirmLoading}>
+                {cancelLabel}
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Modal;

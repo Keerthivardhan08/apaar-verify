@@ -1,0 +1,5 @@
+student_name,institution_student_id,identity_reference,date_of_birth,gender,program_code,admission_cycle,admission_category,admission_status,nri_category,oci_status,foreign_national_status,supernumerary_category
+,IIT-CS-ERR1,DEMO-APAAR-9001,2005-01-01,Male,CS-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Amitabh Roy,IIT-CS-ERR2,INVALID-HASH-FORMAT,2005-02-02,Male,CS-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Rajesh Khanna,IIT-CS-ERR3,DEMO-APAAR-9003,2005-03-03,Male,NON_EXISTENT_PROG,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Alia Bhatt,IIT-CS-ERR4,DEMO-APAAR-9004,2005-04-04,Female,CS-UG-2026,2026-27,invalid_category,admitted,not_applicable,not_applicable,not_applicable,none

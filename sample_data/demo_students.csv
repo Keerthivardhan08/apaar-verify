@@ -1,0 +1,21 @@
+student_name,institution_student_id,identity_reference,date_of_birth,gender,program_code,admission_cycle,admission_category,admission_status,nri_category,oci_status,foreign_national_status,supernumerary_category
+Aarav Sharma,STU-001,DEMO-APAAR-0001,2005-06-15,Male,CS-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Priya Patel,STU-002,DEMO-APAAR-0002,2005-08-22,Female,CS-UG-2026,2026-27,obc,admitted,not_applicable,not_applicable,not_applicable,none
+Rahul Kumar,STU-003,DEMO-APAAR-0003,2005-03-10,Male,EE-UG-2026,2026-27,sc,admitted,not_applicable,not_applicable,not_applicable,none
+Ananya Singh,STU-004,DEMO-APAAR-0004,2005-11-05,Female,CS-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Vikram Nair,STU-005,DEMO-APAAR-0005,2005-07-18,Male,ME-UG-2026,2026-27,ews,admitted,not_applicable,not_applicable,not_applicable,none
+Kavya Reddy,STU-006,,2005-09-30,Female,CS-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Arjun Mehta,STU-007,INVALID-FORMAT-123,2005-04-12,Male,EE-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Sneha Gupta,STU-008,DEMO-APAAR-0008,2005-12-20,Female,CS-UG-2026,2026-27,nri,admitted,applicable,not_applicable,not_applicable,nri
+Rohit Joshi,STU-009,DEMO-APAAR-0001,2005-06-14,Male,CS-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Pooja Agarwal,STU-010,DEMO-APAAR-0010,2005-01-25,Female,ME-UG-2026,2026-27,st,admitted,not_applicable,not_applicable,not_applicable,none
+Karan Verma,STU-011,DEMO-APAAR-0011,,Male,CS-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Meera Krishnan,STU-012,DEMO-APAAR-0012,2005-05-08,Female,EE-UG-2026,2026-27,obc,admitted,not_applicable,not_applicable,not_applicable,none
+Suraj Pandey,STU-013,DEMO-APAAR-0013,2005-10-17,Male,CS-UG-2026,2026-27,nri,admitted,not_applicable,not_applicable,not_applicable,none
+Divya Rao,STU-014,DEMO-APAAR-0014,2005-02-28,Female,ME-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Aditya Shah,STU-015,DEMO-APAAR-0015,2005-08-03,Male,CS-UG-2026,2026-27,sc,admitted,not_applicable,not_applicable,not_applicable,none
+Riya Desai,STU-016,DEMO-APAAR-0016,2005-04-19,Female,EE-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Manish Tiwari,STU-017,DEMO-APAAR-0017,2005-07-07,Male,ME-UG-2026,2026-27,ews,admitted,not_applicable,not_applicable,not_applicable,none
+Shruti Malhotra,STU-018,DEMO-APAAR-0018,2005-11-15,Female,CS-UG-2026,2026-27,obc,admitted,not_applicable,not_applicable,not_applicable,none
+Gaurav Saxena,STU-019,DEMO-APAAR-0019,2005-03-22,Male,CS-UG-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+Neha Bose,STU-020,DEMO-APAAR-0020,2005-09-11,Female,EE-UG-2026,2026-27,st,admitted,not_applicable,not_applicable,not_applicable,none

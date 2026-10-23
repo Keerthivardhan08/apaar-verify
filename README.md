@@ -75,7 +75,7 @@ If you prefer to start services independently:
 
 ### Step 1: Clone Repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/Keerthivardhan08/apaar-verify
 cd apaar-verify
 ```
 

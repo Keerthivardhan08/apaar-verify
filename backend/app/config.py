@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Database
-    DATABASE_URL: str = "postgresql://apaar:apaar123@localhost/apaardb"
+    DATABASE_URL: str = "sqlite:///./apaar.db"
     
     # Security
     SECRET_KEY: str = "dev-secret-key-change-in-production"

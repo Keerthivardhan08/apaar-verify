@@ -235,14 +235,33 @@ def lookup_student_by_apaar(
     program information, open validation issues, and existing workflow status.
     """
     clean_id = apaar_id.strip()
-    rec = db.query(StudentRecord).filter(
-        or_(
-            StudentRecord.identity_reference == clean_id,
-            StudentRecord.identity_reference == clean_id.upper(),
-            StudentRecord.identity_reference.ilike(clean_id),
-            StudentRecord.institution_student_id.ilike(clean_id),
-        )
-    ).first()
+
+    # Build search variants to handle user prefixes and demo conventions (e.g. 0001 -> 1001)
+    search_ids = {clean_id, clean_id.upper()}
+    if "000" in clean_id:
+        search_ids.add(clean_id.replace("000", "100"))
+    if "100" in clean_id:
+        search_ids.add(clean_id.replace("100", "000"))
+    if clean_id.startswith("DEMO-APAAR-"):
+        num_part = clean_id.replace("DEMO-APAAR-", "")
+        search_ids.add(num_part)
+        if num_part.startswith("0"):
+            search_ids.add(f"DEMO-APAAR-1{num_part[1:]}")
+    elif clean_id.isdigit():
+        search_ids.add(f"DEMO-APAAR-{clean_id}")
+        if clean_id.startswith("0"):
+            search_ids.add(f"DEMO-APAAR-1{clean_id[1:]}")
+
+    clauses = []
+    for sid in search_ids:
+        clauses.extend([
+            StudentRecord.identity_reference == sid,
+            StudentRecord.identity_reference == sid.upper(),
+            StudentRecord.identity_reference.ilike(sid),
+            StudentRecord.institution_student_id.ilike(sid),
+        ])
+
+    rec = db.query(StudentRecord).filter(or_(*clauses)).first()
 
     if not rec:
         raise HTTPException(

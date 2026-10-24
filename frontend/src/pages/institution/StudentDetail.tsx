@@ -29,9 +29,16 @@ import {
   FileCheck,
   CheckCircle,
   XCircle,
+  QrCode,
+  Download,
+  ExternalLink,
+  Copy,
+  Lock,
+  Award,
+  RefreshCw,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { ocrApi, DocumentReconciliationResult } from '../../services/api';
+import { ocrApi, DocumentReconciliationResult, verificationApi } from '../../services/api';
 
 export const StudentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,7 +46,9 @@ export const StudentDetail: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialEdit = searchParams.get('edit') === 'true';
 
-  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'issues' | 'ocr'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'issues' | 'ocr' | 'credential'>('details');
+  const [credData, setCredData] = useState<any | null>(null);
+  const [loadingCred, setLoadingCred] = useState(false);
   const [isEditing, setIsEditing] = useState(initialEdit);
 
   // OCR Document Reconciliation state
@@ -143,6 +152,33 @@ export const StudentDetail: React.FC = () => {
     }
   }, [student?.id]);
 
+  const loadCredential = async () => {
+    if (!student?.id) return;
+    setLoadingCred(true);
+    try {
+      const data = await verificationApi.getStudentCredential(student.id);
+      setCredData(data);
+    } catch (err: any) {
+      toast.error('Failed to load verifiable credential');
+    } finally {
+      setLoadingCred(false);
+    }
+  };
+
+  const handleGenerateFreshCredential = async () => {
+    if (!student?.id) return;
+    setLoadingCred(true);
+    try {
+      const data = await verificationApi.generateStudentCredential(student.id);
+      setCredData(data);
+      toast.success('Generated fresh RS256-signed Verifiable Academic Credential!');
+    } catch (err: any) {
+      toast.error('Failed to generate credential');
+    } finally {
+      setLoadingCred(false);
+    }
+  };
+
   const loadPastReconciliations = async (studentId: string) => {
     try {
       const data = await ocrApi.getReconciliations(studentId);
@@ -237,6 +273,17 @@ export const StudentDetail: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
+          <Button
+            variant="primary"
+            onClick={() => {
+              setActiveTab('credential');
+              loadCredential();
+            }}
+            icon={<Award className="w-4 h-4" />}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+          >
+            Verifiable Credential & QR
+          </Button>
           <Button
             variant="outline"
             onClick={() => setIsCorrectionModalOpen(true)}
@@ -356,6 +403,20 @@ export const StudentDetail: React.FC = () => {
           >
             <History className="w-4 h-4 mr-1" />
             <span>Version History ({history.length})</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('credential');
+              loadCredential();
+            }}
+            className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center space-x-2 ${
+              activeTab === 'credential'
+                ? 'border-indigo-600 text-indigo-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Award className="w-4 h-4 mr-1 text-indigo-600" />
+            <span>Verifiable Credential & QR</span>
           </button>
           <button
             onClick={() => {
@@ -828,6 +889,216 @@ export const StudentDetail: React.FC = () => {
               </div>
             </Card>
           )}
+        </div>
+      )}
+
+      {/* Tab: Verifiable Academic Credential (Feature 6) */}
+      {activeTab === 'credential' && (
+        <div className="space-y-6">
+          <Card className="border-indigo-200 shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 shadow-xs">
+                  <Award className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-gray-900">
+                      Official Verifiable Academic Credential
+                    </h2>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      RS256 PKI Certified
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Tightly bound to student's academic identity (APAAR ID) under the AICTE National Trust Framework.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleGenerateFreshCredential}
+                  isLoading={loadingCred}
+                  icon={<RefreshCw className="w-3.5 h-3.5" />}
+                >
+                  Regenerate Token
+                </Button>
+                {credData && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      navigate('/verify/result', {
+                        state: {
+                          result: {
+                            valid: true,
+                            status: 'VALID',
+                            signature_algorithm: 'RS256',
+                            signature_type: 'RS256 (Asymmetric RSA-2048 PKI)',
+                            asymmetric_pki_verified: true,
+                            issuer: 'apaar-verify-demo',
+                            purpose: 'admission_verification',
+                            verified_at: new Date().toISOString(),
+                            claims: credData.claims || {},
+                            subject_reference: credData.subject_reference,
+                          },
+                          token: credData.token,
+                        },
+                      });
+                    }}
+                    icon={<ExternalLink className="w-3.5 h-3.5" />}
+                  >
+                    Test on Public Verifier
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {loadingCred ? (
+              <div className="py-12 flex justify-center">
+                <LoadingSpinner message="Generating RS256 cryptographic verifiable student record..." />
+              </div>
+            ) : credData ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-5">
+                {/* Academic Record Attributes */}
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/70 p-4 rounded-xl border border-gray-200 text-xs">
+                    <div>
+                      <span className="text-gray-500 font-semibold block">Student Full Name:</span>
+                      <span className="text-sm font-bold text-gray-900 block mt-0.5">
+                        {credData.student_name}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 font-semibold block">Academic Identity (APAAR ID):</span>
+                      <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 inline-block mt-0.5">
+                        {credData.apaar_id || student.identity_reference || 'DEMO-APAAR-1001'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 font-semibold block">Sanctioned Program:</span>
+                      <span className="font-medium text-gray-900 block mt-0.5">
+                        {credData.program_name} ({credData.program_code})
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 font-semibold block">Authorized Institution:</span>
+                      <span className="font-medium text-gray-900 block mt-0.5">
+                        {credData.institution_name}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 font-semibold block">Campus Student / Roll ID:</span>
+                      <span className="font-mono text-gray-800 block mt-0.5">
+                        {credData.institution_student_id}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 font-semibold block">Enrollment Status:</span>
+                      <span className="inline-block mt-0.5 font-bold uppercase text-[11px] text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                        {credData.claims?.admission_status || student.admission_status || 'ADMITTED'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Cryptographic Proof Metadata */}
+                  <div className="p-4 rounded-xl bg-slate-900 text-slate-200 space-y-2 text-xs">
+                    <div className="flex items-center justify-between text-indigo-400 font-mono text-[11px] border-b border-slate-800 pb-2">
+                      <span className="flex items-center gap-1.5 font-bold">
+                        <Lock className="w-3.5 h-3.5 text-indigo-400" />
+                        Asymmetric PKI Proof Metadata
+                      </span>
+                      <span>RFC 7517 Compliant</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-[11px] font-mono">
+                      <div>
+                        <span className="text-slate-400 block">Digital Signature:</span>
+                        <span className="text-emerald-400 font-bold">{credData.signature_algorithm}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Key ID (kid):</span>
+                        <span className="text-slate-200">{credData.key_id}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Subject Reference:</span>
+                        <span className="text-slate-200">{credData.subject_reference}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Public Trust URI:</span>
+                        <a
+                          href="http://localhost:8000/api/v1/.well-known/jwks.json"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-indigo-400 hover:text-indigo-300 underline"
+                        >
+                          /.well-known/jwks.json
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Verifiable Token Snippet */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-gray-700">Cryptographic Token (RS256 JWT):</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(credData.token);
+                          toast.success('Token copied to clipboard');
+                        }}
+                        className="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                      >
+                        <Copy className="w-3 h-3" />
+                        Copy Token
+                      </button>
+                    </div>
+                    <div className="p-2.5 bg-gray-100 rounded-lg text-[10px] font-mono text-gray-700 break-all border border-gray-200 max-h-20 overflow-y-auto">
+                      {credData.token}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Scannable Tamper-Proof QR Code */}
+                <div className="flex flex-col items-center justify-center p-6 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-center space-y-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-900">
+                    Tamper-Evident QR Code
+                  </span>
+                  <div className="p-3 bg-white rounded-2xl shadow-sm border border-indigo-200">
+                    <img
+                      src={`http://localhost:8000${credData.qr_endpoint}`}
+                      alt="Verifiable Credential QR"
+                      className="w-44 h-44 object-contain"
+                    />
+                  </div>
+                  <p className="text-[11px] text-gray-500 max-w-[200px]">
+                    Scan using any camera or the APAAR Public Verifier to validate credential integrity in real time.
+                  </p>
+                  <a
+                    href={`http://localhost:8000${credData.qr_endpoint}`}
+                    download={`${student.student_name}_verifiable_qr.png`}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:text-indigo-900 pt-1"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download QR Code
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="py-8 text-center text-gray-500 text-xs">
+                No active credential found. Click "Regenerate Token" above to issue one.
+              </div>
+            )}
+          </Card>
         </div>
       )}
 

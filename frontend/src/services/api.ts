@@ -511,6 +511,16 @@ export const verificationApi = {
       return response.data;
     }
   },
+
+  getStudentCredential: async (recordId: string): Promise<any> => {
+    const response = await apiClient.get(`/verification/student/${recordId}/credential`);
+    return response.data;
+  },
+
+  generateStudentCredential: async (recordId: string): Promise<any> => {
+    const response = await apiClient.post(`/verification/student/${recordId}/generate`);
+    return response.data;
+  },
 };
 
 // ============================================================

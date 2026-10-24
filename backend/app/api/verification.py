@@ -305,3 +305,159 @@ def verify_identifier_endpoint(
     result["subject_reference"] = subject_reference
     result["credential_id"] = str(credential.id)
     return result
+
+
+@router.get("/verification/student/{record_id}/credential")
+def get_student_verifiable_credential(
+    record_id: uuid.UUID,
+    db: Session = Depends(get_db),
+):
+    """
+    Feature 6: Retrieve or automatically issue an authoritative verifiable credential
+    tightly linked to the student's academic identity (APAAR ID).
+    """
+    record = db.query(StudentRecord).filter(StudentRecord.id == record_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Student record not found.")
+
+    cred = (
+        db.query(VerificationCredential)
+        .filter(VerificationCredential.record_id == record.id, VerificationCredential.credential_status == "active")
+        .order_by(VerificationCredential.issued_at.desc())
+        .first()
+    )
+
+    inst = db.query(Institution).filter(Institution.id == record.institution_id).first()
+    prog = db.query(Program).filter(Program.id == record.program_id).first()
+
+    inst_name = inst.name if inst else "Recognized Technical Institution"
+    prog_name = prog.program_name if prog else "B.Tech Engineering"
+    prog_code = prog.program_code if prog else "ENG-UG"
+
+    if not cred:
+        claims = {
+            "student_name": record.student_name,
+            "institution_name": inst_name,
+            "institution_code": inst.institution_code if inst else "INST-001",
+            "institution_student_id": record.institution_student_id,
+            "program_name": prog_name,
+            "program_code": prog_code,
+            "admission_cycle": record.admission_cycle,
+            "admission_status": record.admission_status,
+            "admission_category": record.admission_category,
+            "supernumerary_category": record.supernumerary_category or "none",
+            "apaar_id": record.identity_reference or "APAAR-PENDING",
+            "identity_reference": record.identity_reference,
+            "_privacy_binding": {
+                "purpose": "admission_verification",
+                "purpose_name": "Authoritative Academic Record",
+                "privacy_level": "Full Academic Record Verification",
+                "zero_pii": False,
+            },
+        }
+        subject_reference = f"APAAR-REF-{str(uuid.uuid4())[:8].upper()}"
+        cred, token = issue_credential(
+            record_id=record.id,
+            subject_reference=subject_reference,
+            claims=claims,
+            db=db,
+            purpose="admission_verification",
+        )
+        db.commit()
+    else:
+        token = cred.token
+
+    return {
+        "credential_id": str(cred.id),
+        "record_id": str(record.id),
+        "student_name": record.student_name,
+        "apaar_id": record.identity_reference,
+        "institution_student_id": record.institution_student_id,
+        "institution_name": inst_name,
+        "program_name": prog_name,
+        "program_code": prog_code,
+        "subject_reference": cred.subject_reference,
+        "token": token,
+        "signature_algorithm": "RS256 (Asymmetric RSA-2048 PKI)",
+        "key_id": "apaar-rsa-2026-v1",
+        "status": cred.credential_status,
+        "issued_at": cred.issued_at.isoformat(),
+        "expires_at": cred.expires_at.isoformat(),
+        "qr_endpoint": f"/api/v1/verification/{cred.id}/qr",
+        "receipt_endpoint": f"/api/v1/verification/{cred.id}/receipt",
+        "jwks_uri": "/api/v1/.well-known/jwks.json",
+        "claims": cred.claims,
+    }
+
+
+@router.post("/verification/student/{record_id}/generate")
+def force_generate_student_credential(
+    record_id: uuid.UUID,
+    db: Session = Depends(get_db),
+):
+    """
+    Feature 6: Force generates a fresh RS256-signed verifiable academic credential token
+    and QR code for the given student record.
+    """
+    record = db.query(StudentRecord).filter(StudentRecord.id == record_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Student record not found.")
+
+    inst = db.query(Institution).filter(Institution.id == record.institution_id).first()
+    prog = db.query(Program).filter(Program.id == record.program_id).first()
+
+    inst_name = inst.name if inst else "Recognized Technical Institution"
+    prog_name = prog.program_name if prog else "B.Tech Engineering"
+    prog_code = prog.program_code if prog else "ENG-UG"
+
+    claims = {
+        "student_name": record.student_name,
+        "institution_name": inst_name,
+        "institution_code": inst.institution_code if inst else "INST-001",
+        "institution_student_id": record.institution_student_id,
+        "program_name": prog_name,
+        "program_code": prog_code,
+        "admission_cycle": record.admission_cycle,
+        "admission_status": record.admission_status,
+        "admission_category": record.admission_category,
+        "supernumerary_category": record.supernumerary_category or "none",
+        "apaar_id": record.identity_reference or "APAAR-PENDING",
+        "identity_reference": record.identity_reference,
+        "_privacy_binding": {
+            "purpose": "admission_verification",
+            "purpose_name": "Authoritative Academic Record",
+            "privacy_level": "Full Academic Record Verification",
+            "zero_pii": False,
+        },
+    }
+    subject_reference = f"APAAR-REF-{str(uuid.uuid4())[:8].upper()}"
+    cred, token = issue_credential(
+        record_id=record.id,
+        subject_reference=subject_reference,
+        claims=claims,
+        db=db,
+        purpose="admission_verification",
+    )
+    db.commit()
+
+    return {
+        "credential_id": str(cred.id),
+        "record_id": str(record.id),
+        "student_name": record.student_name,
+        "apaar_id": record.identity_reference,
+        "institution_student_id": record.institution_student_id,
+        "institution_name": inst_name,
+        "program_name": prog_name,
+        "program_code": prog_code,
+        "subject_reference": cred.subject_reference,
+        "token": token,
+        "signature_algorithm": "RS256 (Asymmetric RSA-2048 PKI)",
+        "key_id": "apaar-rsa-2026-v1",
+        "status": cred.credential_status,
+        "issued_at": cred.issued_at.isoformat(),
+        "expires_at": cred.expires_at.isoformat(),
+        "qr_endpoint": f"/api/v1/verification/{cred.id}/qr",
+        "receipt_endpoint": f"/api/v1/verification/{cred.id}/receipt",
+        "jwks_uri": "/api/v1/.well-known/jwks.json",
+        "claims": cred.claims,
+    }

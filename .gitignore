@@ -67,4 +67,7 @@ desktop.ini
 *.db
 *.sqlite3
 *.exe
+*.pptx
+APAAR_Verify_SIH2026*
+presentation_assets/
 

@@ -156,13 +156,20 @@ npm run dev
 
 ## 4. Default Demonstration Login Accounts
 
+All demo accounts use standard password: **`Demo@1234`**
+
 | Role | Email | Password | Primary Workflow |
 |---|---|---|---|
 | **AICTE Administrator** | `admin@aicte.gov.in` | `Demo@1234` | National command center, topological graph, risk studio, statutory compliance reports |
 | **AICTE Reviewer** | `reviewer@aicte.gov.in` | `Demo@1234` | Investigate anomalies, review expanded corrections, audit logs |
-| **IIT Demo Operator** | `operator@iit-demo.edu` | `Demo@1234` | Batch uploads, student records, degree certificates with APAAR ID, real-time issue solver |
-| **NIT Demo Operator** | `operator@nit-demo.edu` | `Demo@1234` | Isolated institutional tenant with independent student data |
-| **Public Verifier** | Anonymous / Public | N/A | QR scanning and cryptographic token verification (`/verify`) |
+| **DSCE Operator** | `operator@dsce.edu.in` | `Demo@1234` | Dayananda Sagar College of Engineering — student admissions, APAAR linking, real-time issue solver |
+| **DSCE Administrator** | `admin@dsce.edu.in` | `Demo@1234` | DSCE Principal/Dean — institutional oversight, quota adherence, degree certificate approvals |
+| **IIT Demo Operator** | `operator@iit-demo.edu` | `Demo@1234` | IIT campus data operator — batch uploads, degree certificates with APAAR ID, real-time solver |
+| **IIT Demo Admin** | `admin@iit-demo.edu` | `Demo@1234` | IIT campus institutional dean & administration |
+| **NIT Demo Operator** | `operator@nit-demo.edu` | `Demo@1234` | NIT Surathkal isolated tenant — demonstrates multi-tenant boundaries & cross-institution duplicates |
+| **DEC Pune Operator** | `operator@dec-demo.edu` | `Demo@1234` | Demo Engineering College Pune campus operator |
+| **Corporate Verifier** | `verifier@demo.gov.in` | `Demo@1234` | Employer & background check credential verification account |
+| **Public Verifier** | Anonymous / Public | N/A | Zero-trust QR scanning and cryptographic token verification (`/verify`) |
 
 ---
 

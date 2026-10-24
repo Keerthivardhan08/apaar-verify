@@ -1,7 +1,7 @@
 """
 Synthetic seed data script for APAAR Verify.
 Populates demonstration institutions, programs, intake limits, users,
-and 50 synthetic student records with deliberate anomalies for testing.
+and synthetic student records with deliberate anomalies for testing.
 
 DISCLAIMER: All data generated is synthetic for demonstration purposes only.
 """
@@ -60,7 +60,16 @@ def seed():
             city="Pune",
             status="active",
         )
-        db.add_all([inst1, inst2, inst3])
+        inst4 = Institution(
+            id=uuid.uuid4(),
+            institution_code="DSCE-BLR",
+            name="Dayananda Sagar College of Engineering",
+            institution_type="engineering",
+            state="Karnataka",
+            city="Bengaluru",
+            status="active",
+        )
+        db.add_all([inst1, inst2, inst3, inst4])
         db.flush()
 
         print("Seeding Programs...")
@@ -118,7 +127,43 @@ def seed():
             status="active",
         )
 
-        db.add_all([prog_iit_cs, prog_iit_ee, prog_iit_me, prog_nit_cs, prog_nit_ec])
+        # DSCE Programs
+        prog_dsce_cs = Program(
+            id=uuid.uuid4(),
+            institution_id=inst4.id,
+            program_code="CS-UG-2026",
+            program_name="B.E. Computer Science & Engineering",
+            academic_level="ug",
+            branch="Computer Science",
+            duration_years=4,
+            status="active",
+        )
+        prog_dsce_ai = Program(
+            id=uuid.uuid4(),
+            institution_id=inst4.id,
+            program_code="AI-UG-2026",
+            program_name="B.E. Artificial Intelligence & Machine Learning",
+            academic_level="ug",
+            branch="Artificial Intelligence",
+            duration_years=4,
+            status="active",
+        )
+        prog_dsce_is = Program(
+            id=uuid.uuid4(),
+            institution_id=inst4.id,
+            program_code="IS-UG-2026",
+            program_name="B.E. Information Science & Engineering",
+            academic_level="ug",
+            branch="Information Science",
+            duration_years=4,
+            status="active",
+        )
+
+        db.add_all([
+            prog_iit_cs, prog_iit_ee, prog_iit_me,
+            prog_nit_cs, prog_nit_ec,
+            prog_dsce_cs, prog_dsce_ai, prog_dsce_is
+        ])
         db.flush()
 
         print("Seeding Intake Limits...")
@@ -156,7 +201,29 @@ def seed():
             effective_from=date(2026, 6, 1),
             verification_status="verified",
         )
-        db.add_all([intake_iit_cs, intake_iit_ee, intake_nit_cs])
+        intake_dsce_cs = IntakeLimit(
+            id=uuid.uuid4(),
+            program_id=prog_dsce_cs.id,
+            admission_cycle="2026-27",
+            approved_capacity=120,
+            category="total",
+            source_type="official",
+            source_reference="AICTE/DSCE/APPROVAL/2026/01",
+            effective_from=date(2026, 6, 1),
+            verification_status="verified",
+        )
+        intake_dsce_ai = IntakeLimit(
+            id=uuid.uuid4(),
+            program_id=prog_dsce_ai.id,
+            admission_cycle="2026-27",
+            approved_capacity=60,
+            category="total",
+            source_type="official",
+            source_reference="AICTE/DSCE/APPROVAL/2026/02",
+            effective_from=date(2026, 6, 1),
+            verification_status="verified",
+        )
+        db.add_all([intake_iit_cs, intake_iit_ee, intake_nit_cs, intake_dsce_cs, intake_dsce_ai])
         db.flush()
 
         print("Seeding Users & Roles...")
@@ -178,7 +245,15 @@ def seed():
             full_name="Anil Verma (IIT Operator)",
             status="active",
         )
-        # 3. NIT Operator
+        # 3. IIT Admin / Dean
+        user_iit_admin = User(
+            id=uuid.uuid4(),
+            email="admin@iit-demo.edu",
+            password_hash=pw_hash,
+            full_name="Prof. S. R. Raman (IIT Dean / Admin)",
+            status="active",
+        )
+        # 4. NIT Operator
         user_nit_op = User(
             id=uuid.uuid4(),
             email="operator@nit-demo.edu",
@@ -186,7 +261,31 @@ def seed():
             full_name="Suresh Nair (NIT Operator)",
             status="active",
         )
-        # 4. Reviewer
+        # 5. DSCE Operator
+        user_dsce_op = User(
+            id=uuid.uuid4(),
+            email="operator@dsce.edu.in",
+            password_hash=pw_hash,
+            full_name="Naveen Gowda (DSCE Operator)",
+            status="active",
+        )
+        # 6. DSCE Admin / Principal
+        user_dsce_admin = User(
+            id=uuid.uuid4(),
+            email="admin@dsce.edu.in",
+            password_hash=pw_hash,
+            full_name="Dr. C. P. S. Prakash (Principal / DSCE Admin)",
+            status="active",
+        )
+        # 7. DEC Operator
+        user_dec_op = User(
+            id=uuid.uuid4(),
+            email="operator@dec-demo.edu",
+            password_hash=pw_hash,
+            full_name="Kavita Patil (DEC Pune Operator)",
+            status="active",
+        )
+        # 8. AICTE Compliance Reviewer
         user_reviewer = User(
             id=uuid.uuid4(),
             email="reviewer@aicte.gov.in",
@@ -194,7 +293,18 @@ def seed():
             full_name="Pooja Sharma (Compliance Reviewer)",
             status="active",
         )
-        db.add_all([user_admin, user_iit_op, user_nit_op, user_reviewer])
+        # 9. Corporate / Public Verifier
+        user_verifier = User(
+            id=uuid.uuid4(),
+            email="verifier@demo.gov.in",
+            password_hash=pw_hash,
+            full_name="Vikramaditya Sen (Corporate / Public Verifier)",
+            status="active",
+        )
+        db.add_all([
+            user_admin, user_iit_op, user_iit_admin, user_nit_op,
+            user_dsce_op, user_dsce_admin, user_dec_op, user_reviewer, user_verifier
+        ])
         db.flush()
 
         # Roles
@@ -202,8 +312,13 @@ def seed():
             UserRole(id=uuid.uuid4(), user_id=user_admin.id, role="aicte_admin"),
             UserRole(id=uuid.uuid4(), user_id=user_admin.id, role="reviewer"),
             UserRole(id=uuid.uuid4(), user_id=user_iit_op.id, role="institution_operator", institution_id=inst1.id),
+            UserRole(id=uuid.uuid4(), user_id=user_iit_admin.id, role="institution_admin", institution_id=inst1.id),
             UserRole(id=uuid.uuid4(), user_id=user_nit_op.id, role="institution_operator", institution_id=inst2.id),
+            UserRole(id=uuid.uuid4(), user_id=user_dsce_op.id, role="institution_operator", institution_id=inst4.id),
+            UserRole(id=uuid.uuid4(), user_id=user_dsce_admin.id, role="institution_admin", institution_id=inst4.id),
+            UserRole(id=uuid.uuid4(), user_id=user_dec_op.id, role="institution_operator", institution_id=inst3.id),
             UserRole(id=uuid.uuid4(), user_id=user_reviewer.id, role="reviewer"),
+            UserRole(id=uuid.uuid4(), user_id=user_verifier.id, role="verifier"),
         ]
         db.add_all(roles)
         db.flush()
@@ -240,6 +355,14 @@ def seed():
             {"name": "Ananya Rao (Transfer/Duplicate)", "id": "NIT-CS-001", "ident": CROSS_ID, "prog": prog_nit_cs, "cat": "general", "nri": "not_applicable"},
             {"name": "Manish Tiwari", "id": "NIT-CS-002", "ident": "DEMO-APAAR-2002", "prog": prog_nit_cs, "cat": "obc", "nri": "not_applicable"},
             {"name": "Divya Krishnan", "id": "NIT-CS-003", "ident": "DEMO-APAAR-2003", "prog": prog_nit_cs, "cat": "general", "nri": "not_applicable"},
+        ]
+
+        # DSCE students
+        dsce_students_data = [
+            {"name": "Chirag Hegde", "id": "DSCE-2026-CS001", "ident": "987654321011", "prog": prog_dsce_cs, "cat": "general", "nri": "not_applicable"},
+            {"name": "Aishwarya Rao", "id": "DSCE-2026-CS002", "ident": "987654321012", "prog": prog_dsce_cs, "cat": "obc", "nri": "not_applicable"},
+            {"name": "Darshan Kumar", "id": "DSCE-2026-AI001", "ident": "987654321013", "prog": prog_dsce_ai, "cat": "sc", "nri": "not_applicable"},
+            {"name": "Meghana B.", "id": "DSCE-2026-IS001", "ident": "987654321014", "prog": prog_dsce_is, "cat": "general", "nri": "not_applicable"},
         ]
 
         all_records = []
@@ -291,6 +414,30 @@ def seed():
             db.add(rec)
             all_records.append(rec)
 
+        for s in dsce_students_data:
+            rec = StudentRecord(
+                id=uuid.uuid4(),
+                institution_id=inst4.id,
+                program_id=s["prog"].id,
+                admission_cycle="2026-27",
+                institution_student_id=s["id"],
+                student_name=s["name"],
+                date_of_birth=date(2005, 7, 10),
+                gender="male" if "Chirag" in s["name"] or "Darshan" in s["name"] else "female",
+                admission_category=s["cat"],
+                admission_status="admitted",
+                nri_category=s["nri"],
+                oci_status="not_applicable",
+                foreign_national_status="not_applicable",
+                supernumerary_category="none",
+                identity_reference=s["ident"],
+                record_status="submitted",
+                identity_verification_status="mock_verified",
+                created_by=user_dsce_op.id,
+            )
+            db.add(rec)
+            all_records.append(rec)
+
         db.flush()
 
         print("Executing Validation Engine across all records...")
@@ -304,7 +451,7 @@ def seed():
             target_type="database",
             outcome="success",
             actor_id=user_admin.id,
-            metadata={"records_seeded": len(all_records), "institutions": 3},
+            metadata={"records_seeded": len(all_records), "institutions": 4},
         )
 
         notif = Notification(

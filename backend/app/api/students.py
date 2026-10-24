@@ -316,6 +316,7 @@ def get_student_by_id(
 
 
 @router.patch("/students/{id}", response_model=StudentRecordOut)
+@router.put("/students/{id}", response_model=StudentRecordOut)
 def update_student(
     id: uuid.UUID,
     body: StudentRecordUpdate,

@@ -722,7 +722,7 @@ export const InstitutionComplianceDashboard: React.FC = () => {
                       size="sm"
                       onClick={() => {
                         if (isAICTEAdmin()) {
-                          navigate(`/aicte/integrity?search=${encodeURIComponent(s.student_name)}`);
+                          navigate(`/aicte/students/${s.id}`);
                         } else {
                           navigate(`/institution/students/${s.id}`);
                         }

@@ -123,6 +123,8 @@ export const App: React.FC = () => {
           <Route index element={<AICTEOverview />} />
           <Route path="institutions" element={<Institutions />} />
           <Route path="institutions/:id" element={<InstitutionComplianceDashboard />} />
+          <Route path="students" element={<Students />} />
+          <Route path="students/:id" element={<StudentDetail />} />
           <Route path="integrity" element={<IntegrityMonitoring />} />
           <Route path="reviews" element={<ReviewQueue />} />
           <Route path="reviews/:id" element={<ReviewDetail />} />

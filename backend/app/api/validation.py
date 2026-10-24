@@ -21,6 +21,7 @@ class RunValidationRequest(BaseModel):
 
 
 @router.get("/issues")
+@router.get("/validation/issues")
 def list_issues(
     institution_id: Optional[str] = Query(None),
     severity: Optional[str] = Query(None),

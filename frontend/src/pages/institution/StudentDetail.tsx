@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import {
   useStudent,
   useStudentHistory,
@@ -43,6 +44,7 @@ import { ocrApi, DocumentReconciliationResult, verificationApi } from '../../ser
 export const StudentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user, isAICTEAdmin } = useAuth();
   const [searchParams] = useSearchParams();
   const initialEdit = searchParams.get('edit') === 'true';
 
@@ -69,7 +71,7 @@ export const StudentDetail: React.FC = () => {
   const [proposedValue, setProposedValue] = useState('');
   const [justification, setJustification] = useState('');
 
-  const { data: student, isLoading, isError, refetch } = useStudent(id);
+  const { data: student, isLoading, isError, error, refetch } = useStudent(id);
   const { data: history = [], isLoading: isHistoryLoading } = useStudentHistory(id);
   const { data: issuesData } = useIssues({ page: 1, size: 50 });
 
@@ -105,10 +107,43 @@ export const StudentDetail: React.FC = () => {
   }
 
   if (isError || !student) {
+    const isForbidden = (error as any)?.response?.status === 403;
+    const isNotFound = (error as any)?.response?.status === 404;
+
+    if (isForbidden) {
+      return (
+        <div className="max-w-2xl mx-auto my-12 bg-white rounded-2xl border border-amber-200 shadow-sm p-8 text-center space-y-4">
+          <div className="w-14 h-14 mx-auto rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+            <Lock className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">Institutional Access Boundary Restricted</h2>
+          <p className="text-sm text-gray-600">
+            This student record belongs to a different institution. Under AICTE Multi-Tenant isolation policies, institution operators can only view student records enrolled at their own institution.
+          </p>
+          <div className="p-3 bg-amber-50 rounded-lg text-xs text-amber-800 text-left font-mono">
+            Active Account: {user?.email || 'Institution Operator'} <br />
+            Status: 403 Forbidden (Multi-Tenant Scoping Policy)
+          </div>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Button variant="primary" onClick={() => navigate(isAICTEAdmin() ? '/aicte/institutions' : '/institution/students')}>
+              {isAICTEAdmin() ? 'Back to AICTE Institutions' : "View My College's Students"}
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/login')}>
+              Switch Account / Login as AICTE Admin
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <ErrorState
-        title="Student Record Not Found"
-        message="The requested student record could not be loaded or may have been archived."
+        title={isNotFound ? "Student Record Not Found" : "Unable to Load Student Record"}
+        message={
+          isNotFound
+            ? `No student record was found matching ID "${id}". Please verify the identifier.`
+            : "An error occurred while fetching the student record. Please check server connectivity."
+        }
         onRetry={refetch}
       />
     );
@@ -253,10 +288,18 @@ export const StudentDetail: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/institution/students')}
+            onClick={() => {
+              if (window.history.length > 2) {
+                navigate(-1);
+              } else if (isAICTEAdmin()) {
+                navigate('/aicte/institutions');
+              } else {
+                navigate('/institution/students');
+              }
+            }}
             icon={<ArrowLeft className="w-4 h-4" />}
           >
-            Back to Students
+            Back
           </Button>
           <div>
             <div className="flex items-center space-x-2">

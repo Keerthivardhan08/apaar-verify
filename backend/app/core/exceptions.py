@@ -86,9 +86,11 @@ async def apaar_exception_handler(request, exc: APAARException):
 
 async def validation_exception_handler(request, exc):
     from fastapi.responses import JSONResponse
+    from fastapi.encoders import jsonable_encoder
+    errors = exc.errors() if hasattr(exc, "errors") else str(exc)
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors() if hasattr(exc, "errors") else str(exc), "code": "VALIDATION_ERROR"},
+        content={"detail": jsonable_encoder(errors), "code": "VALIDATION_ERROR"},
     )
 
 

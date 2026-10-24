@@ -20,6 +20,7 @@ import Corrections from './pages/institution/Corrections';
 import IntakeMonitoring from './pages/institution/IntakeMonitoring';
 import Reports from './pages/institution/Reports';
 import { InstitutionalApi } from './pages/institution/InstitutionalApi';
+import { ApaarQuickDesk } from './pages/institution/ApaarQuickDesk';
 
 // AICTE Pages
 import AICTELayout from './pages/aicte/AICTELayout';
@@ -97,6 +98,7 @@ export const App: React.FC = () => {
           <Route path="students" element={<Students />} />
           <Route path="students/:id" element={<StudentDetail />} />
           <Route path="upload" element={<Upload />} />
+          <Route path="apaar-desk" element={<ApaarQuickDesk />} />
           <Route path="uploads" element={<UploadHistory />} />
           <Route path="issues" element={<ValidationIssues />} />
           <Route path="corrections" element={<Corrections />} />

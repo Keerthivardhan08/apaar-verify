@@ -9,10 +9,11 @@ Workflow Lifecycle:
 """
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
 from app.database import get_db
 from app.core.permissions import get_current_user, require_institution_access
@@ -43,6 +44,108 @@ class InstitutionAdminDecisionRequest(BaseModel):
 class RegulatoryDecisionRequest(BaseModel):
     decision: str  # approve / reject
     notes: str
+
+
+class ApaarQuickUpdateProposalRequest(BaseModel):
+    apaar_id: str
+    proposed_changes: Dict[str, Any]
+    operator_notes: str
+    document_reference: Optional[str] = None
+
+
+@router.post("/apaar-quick-update", status_code=status.HTTP_201_CREATED, summary="APAAR Quick Update Action")
+def apaar_quick_update_action(
+    body: ApaarQuickUpdateProposalRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Submits multi-field or single-field correction proposals for a student identified strictly by APAAR ID.
+    Enforces that every modified field triggers an immutable regulatory workflow item.
+    """
+    clean_id = body.apaar_id.strip()
+    student = db.query(StudentRecord).filter(
+        or_(
+            StudentRecord.identity_reference == clean_id,
+            StudentRecord.identity_reference == clean_id.upper(),
+            StudentRecord.identity_reference.ilike(clean_id),
+            StudentRecord.institution_student_id.ilike(clean_id),
+        )
+    ).first()
+
+    if not student:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No student record found matching APAAR ID '{body.apaar_id}'"
+        )
+
+    require_institution_access(student.institution_id, current_user)
+
+    notes = body.operator_notes
+    if body.document_reference:
+        notes = f"[Document: {body.document_reference}] {notes}"
+
+    workflows_created = []
+
+    for field, new_val in body.proposed_changes.items():
+        if not hasattr(student, field):
+            continue
+        orig_val = str(getattr(student, field, "") or "")
+        new_val_str = str(new_val or "")
+        if orig_val == new_val_str:
+            continue  # Value did not change
+
+        wf = ExpandedCorrectionWorkflow(
+            id=uuid.uuid4(),
+            record_id=student.id,
+            institution_id=student.institution_id,
+            stage="operator_draft",
+            workflow_status="pending_institution_admin",
+            field_name=field,
+            original_value=orig_val,
+            proposed_value=new_val_str,
+            operator_notes=notes,
+        )
+        db.add(wf)
+        workflows_created.append({
+            "workflow_id": str(wf.id),
+            "field_name": field,
+            "original_value": orig_val,
+            "proposed_value": new_val_str,
+        })
+
+    if not workflows_created:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No changes detected between the current record values and the proposed values."
+        )
+
+    student.record_status = "correction_requested"
+    db.commit()
+
+    log_event(
+        actor_id=current_user.id,
+        action="APAAR_QUICK_UPDATE_SUBMITTED",
+        target_type="student_record",
+        target_id=str(student.id),
+        outcome="success",
+        metadata={
+            "apaar_id": clean_id,
+            "changed_fields": [w["field_name"] for w in workflows_created],
+            "document_reference": body.document_reference,
+        },
+        db=db,
+    )
+
+    return {
+        "status": "success",
+        "message": f"Successfully submitted {len(workflows_created)} field change(s) for regulatory approval.",
+        "student_id": str(student.id),
+        "student_name": student.student_name,
+        "apaar_id": student.identity_reference,
+        "workflows": workflows_created,
+        "workflow_status": "pending_institution_admin",
+    }
 
 
 @router.post("/submit", status_code=status.HTTP_201_CREATED, summary="Operator Submits Correction Proposal")

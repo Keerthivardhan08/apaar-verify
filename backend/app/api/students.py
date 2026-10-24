@@ -17,6 +17,7 @@ from app.core.security import compute_identifier_fingerprint, mask_fingerprint
 from app.models.user import User
 from app.models.institution import Institution, Program
 from app.models.student import StudentRecord, StudentIdentity, StudentRecordVersion
+from app.models.validation import ValidationIssue
 from app.schemas.common import PaginatedResponse, MessageResponse
 from app.schemas.student import (
     StudentRecordCreate,
@@ -220,6 +221,62 @@ def list_students(
         size=size,
         pages=pages,
     )
+
+
+@router.get("/students/lookup/by-apaar")
+def lookup_student_by_apaar(
+    apaar_id: str = Query(..., description="12-digit APAAR ID or DEMO reference"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Look up a student record strictly by their APAAR ID.
+    Enforces institutional tenant authorization and returns full student profile,
+    program information, open validation issues, and existing workflow status.
+    """
+    clean_id = apaar_id.strip()
+    rec = db.query(StudentRecord).filter(
+        or_(
+            StudentRecord.identity_reference == clean_id,
+            StudentRecord.identity_reference == clean_id.upper(),
+            StudentRecord.identity_reference.ilike(clean_id),
+            StudentRecord.institution_student_id.ilike(clean_id),
+        )
+    ).first()
+
+    if not rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No student record found matching APAAR ID '{apaar_id}'. Please verify the identifier and try again."
+        )
+
+    require_institution_access(current_user, rec.institution_id)
+
+    program = db.query(Program).filter(Program.id == rec.program_id).first()
+    institution = db.query(Institution).filter(Institution.id == rec.institution_id).first()
+    issues = db.query(ValidationIssue).filter(ValidationIssue.record_id == rec.id, ValidationIssue.status == "open").all()
+    versions_count = db.query(StudentRecordVersion).filter(StudentRecordVersion.record_id == rec.id).count()
+
+    res = StudentRecordOut.model_validate(rec)
+    res.masked_identity_reference = _mask_reference(rec.identity_reference)
+
+    return {
+        "student": res,
+        "program_code": program.program_code if program else "N/A",
+        "program_name": program.program_name if program else "N/A",
+        "institution_name": institution.name if institution else "N/A",
+        "open_issues_count": len(issues),
+        "open_issues": [
+            {
+                "rule_code": iss.rule_code,
+                "severity": iss.severity,
+                "description": iss.description,
+                "affected_field": iss.affected_field,
+            }
+            for iss in issues
+        ],
+        "versions_count": versions_count,
+    }
 
 
 @router.get("/students/{id}", response_model=StudentRecordOut)

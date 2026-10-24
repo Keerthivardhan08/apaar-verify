@@ -87,6 +87,8 @@ export interface StudentRecord {
   identity_verification_status: string;
   aadhaar_hash?: string | null;
   apaar_id?: string | null;
+  identity_reference?: string | null;
+  masked_identity_reference?: string | null;
   email?: string | null;
   phone?: string | null;
   created_at: string;

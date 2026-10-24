@@ -221,6 +221,26 @@ export const studentApi = {
     return response.data;
   },
 
+  lookupByApaar: async (apaarId: string): Promise<{
+    student: StudentRecord;
+    program_code: string;
+    program_name: string;
+    institution_name: string;
+    open_issues_count: number;
+    open_issues: Array<{
+      rule_code: string;
+      severity: string;
+      description: string;
+      affected_field: string;
+    }>;
+    versions_count: number;
+  }> => {
+    const response = await apiClient.get('/students/lookup/by-apaar', {
+      params: { apaar_id: apaarId },
+    });
+    return response.data;
+  },
+
   createStudent: async (data: Partial<StudentRecord>): Promise<StudentRecord> => {
     const response = await apiClient.post<StudentRecord>('/students', data);
     return response.data;
@@ -705,6 +725,29 @@ export const referenceDataApi = {
 };
 
 export const correctionWorkflowApi = {
+  apaarQuickUpdate: async (data: {
+    apaar_id: string;
+    proposed_changes: Record<string, any>;
+    operator_notes: string;
+    document_reference?: string;
+  }): Promise<{
+    status: string;
+    message: string;
+    student_id: string;
+    student_name: string;
+    apaar_id: string;
+    workflows: Array<{
+      workflow_id: string;
+      field_name: string;
+      original_value: string;
+      proposed_value: string;
+    }>;
+    workflow_status: string;
+  }> => {
+    const response = await apiClient.post('/corrections-workflow/apaar-quick-update', data);
+    return response.data;
+  },
+
   submitProposal: async (data: {
     record_id: string;
     field_name: string;

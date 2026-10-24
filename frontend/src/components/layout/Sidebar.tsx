@@ -20,6 +20,7 @@ import {
   QrCode,
   Key,
   Clock,
+  Sparkles,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -29,6 +30,7 @@ export const Sidebar: React.FC = () => {
     { label: 'Overview', to: '/institution', icon: LayoutDashboard, end: true },
     { label: 'Students', to: '/institution/students', icon: Users },
     { label: 'Upload Data', to: '/institution/upload', icon: UploadCloud },
+    { label: 'APAAR Quick Desk', to: '/institution/apaar-desk', icon: Sparkles },
     { label: 'Upload History', to: '/institution/uploads', icon: History },
     { label: 'Validation Issues', to: '/institution/issues', icon: AlertTriangle },
     { label: 'Corrections', to: '/institution/corrections', icon: FileEdit },

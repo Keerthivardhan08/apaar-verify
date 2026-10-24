@@ -18,14 +18,17 @@ import {
   ArrowRight,
   ShieldCheck,
   RotateCcw,
+  Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { ApaarQuickDesk } from './ApaarQuickDesk';
 
 export const Upload: React.FC = () => {
   const navigate = useNavigate();
   const { getUserInstitutionId } = useAuth();
   const institutionId = getUserInstitutionId() || 'INST-001';
 
+  const [activeTab, setActiveTab] = useState<'batch' | 'manual'>('batch');
   const [cycle, setCycle] = useState('2024-2025');
   const [file, setFile] = useState<File | null>(null);
   const [previewRows, setPreviewRows] = useState<string[][]>([]);
@@ -183,27 +186,64 @@ export const Upload: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Upload Workspace Header & Tab Selector */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Upload Student Data</h1>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Student Data Ingestion & Updates</h1>
           <p className="text-sm text-gray-500">
-            Ingest bulk student records for AICTE intake compliance and APAAR verification.
+            Submit new admission batches or perform manual APAAR-gated student profile updates.
           </p>
         </div>
 
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleDownloadTemplate}
-          icon={<Download className="w-4 h-4" />}
-        >
-          Download CSV Template
-        </Button>
+        {activeTab === 'batch' && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleDownloadTemplate}
+            icon={<Download className="w-4 h-4" />}
+          >
+            Download CSV Template
+          </Button>
+        )}
       </div>
 
-      {/* Cycle Selector and Upload Container */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Mode Switcher Tabs */}
+      <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl w-fit border border-slate-200">
+        <button
+          type="button"
+          onClick={() => setActiveTab('batch')}
+          className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+            activeTab === 'batch'
+              ? 'bg-white text-indigo-700 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <UploadCloud className="w-4 h-4" />
+          Batch CSV Staged Upload
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('manual')}
+          className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+            activeTab === 'manual'
+              ? 'bg-white text-indigo-700 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-indigo-600" />
+          Manual APAAR Quick Desk
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+            GATED
+          </span>
+        </button>
+      </div>
+
+      {activeTab === 'manual' ? (
+        <ApaarQuickDesk />
+      ) : (
+        <>
+          {/* Cycle Selector and Upload Container */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <Card>
             {/* Cycle Selector */}
@@ -490,6 +530,8 @@ export const Upload: React.FC = () => {
           </Card>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import AppLayout from './components/layout/AppLayout';
 import LoadingSpinner from './components/ui/LoadingSpinner';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 
 // Pages
 import Login from './pages/Login';
@@ -76,7 +77,8 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 export const App: React.FC = () => {
   return (
-    <Routes>
+    <ErrorBoundary fallbackTitle="System Navigation Error">
+      <Routes>
       {/* Root redirect */}
       <Route path="/" element={<RootRedirect />} />
 
@@ -140,6 +142,7 @@ export const App: React.FC = () => {
       {/* 404 Route */}
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </ErrorBoundary>
   );
 };
 

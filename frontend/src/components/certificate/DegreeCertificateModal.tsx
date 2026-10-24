@@ -206,8 +206,8 @@ export const DegreeCertificateModal: React.FC<DegreeCertificateModalProps> = ({
                     [Digitally Signed by Registrar]
                   </div>
                   <div className="border-t border-slate-400 pt-1">
-                    <div className="text-xs font-bold text-slate-900">{data.signatories[1]?.name || 'Registrar'}</div>
-                    <div className="text-[10px] text-slate-500 uppercase">{data.signatories[1]?.role || 'Registrar'}</div>
+                    <div className="text-xs font-bold text-slate-900">{data.signatories?.[1]?.name || 'Registrar'}</div>
+                    <div className="text-[10px] text-slate-500 uppercase">{data.signatories?.[1]?.role || 'Registrar'}</div>
                   </div>
                 </div>
 
@@ -233,10 +233,10 @@ export const DegreeCertificateModal: React.FC<DegreeCertificateModalProps> = ({
                   </div>
                   <div className="border-t border-slate-400 pt-1">
                     <div className="text-xs font-bold text-slate-900">
-                      {data.signatories[2]?.name || 'Director'}
+                      {data.signatories?.[2]?.name || 'Director'}
                     </div>
                     <div className="text-[10px] text-slate-500 uppercase">
-                      {data.signatories[2]?.role || 'Director / Vice-Chancellor'}
+                      {data.signatories?.[2]?.role || 'Director / Vice-Chancellor'}
                     </div>
                   </div>
                 </div>

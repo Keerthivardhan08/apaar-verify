@@ -93,6 +93,31 @@ export const StudentDetail: React.FC = () => {
     supernumerary_category: 'none',
   });
 
+  // Safe formatting helpers to prevent runtime render crashes
+  const safeStr = (val: any, fallback = '—'): string => {
+    if (val === null || val === undefined || val === '') return fallback;
+    return typeof val === 'string' ? val.replace(/_/g, ' ') : String(val);
+  };
+
+  const safeDate = (val: any): string => {
+    if (!val) return '—';
+    try {
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? '—' : d.toLocaleString();
+    } catch {
+      return '—';
+    }
+  };
+
+  const loadPastReconciliations = async (studentId: string) => {
+    try {
+      const data = await ocrApi.getReconciliations(studentId);
+      setPastRecons(data);
+    } catch (err) {
+      console.error('Failed to load past reconciliations', err);
+    }
+  };
+
   // Sync edit form when student data loads
   React.useEffect(() => {
     if (student) {
@@ -109,6 +134,13 @@ export const StudentDetail: React.FC = () => {
       });
     }
   }, [student]);
+
+  // Load past reconciliations when student is ready (MUST be called before any early return)
+  useEffect(() => {
+    if (student?.id) {
+      loadPastReconciliations(student.id);
+    }
+  }, [student?.id]);
 
   if (isLoading) {
     return <LoadingSpinner fullScreen message="Loading student record..." />;
@@ -133,7 +165,7 @@ export const StudentDetail: React.FC = () => {
             Status: 403 Forbidden (Multi-Tenant Scoping Policy)
           </div>
           <div className="flex items-center justify-center gap-3 pt-2">
-            <Button variant="primary" onClick={() => navigate(isAICTEAdmin() ? '/aicte/institutions' : '/institution/students')}>
+            <Button variant="primary" onClick={() => navigate((typeof isAICTEAdmin === "function" && isAICTEAdmin()) ? '/aicte/institutions' : '/institution/students')}>
               {isAICTEAdmin() ? 'Back to AICTE Institutions' : "View My College's Students"}
             </Button>
             <Button variant="outline" onClick={() => navigate('/login')}>
@@ -189,11 +221,6 @@ export const StudentDetail: React.FC = () => {
     setJustification('');
   };
 
-  useEffect(() => {
-    if (student?.id) {
-      loadPastReconciliations(student.id);
-    }
-  }, [student?.id]);
 
   const loadCredential = async () => {
     if (!student?.id) return;
@@ -222,14 +249,6 @@ export const StudentDetail: React.FC = () => {
     }
   };
 
-  const loadPastReconciliations = async (studentId: string) => {
-    try {
-      const data = await ocrApi.getReconciliations(studentId);
-      setPastRecons(data);
-    } catch (err) {
-      console.error('Failed to load past reconciliations', err);
-    }
-  };
 
   const handleSimulateValid = () => {
     if (!student) return;
@@ -299,7 +318,7 @@ export const StudentDetail: React.FC = () => {
             onClick={() => {
               if (window.history.length > 2) {
                 navigate(-1);
-              } else if (isAICTEAdmin()) {
+              } else if (typeof isAICTEAdmin === "function" && isAICTEAdmin()) {
                 navigate('/aicte/institutions');
               } else {
                 navigate('/institution/students');
@@ -583,7 +602,7 @@ export const StudentDetail: React.FC = () => {
               ) : (
                 <div className="pt-0.5">
                   <span className="inline-block uppercase text-xs font-bold tracking-wider px-2.5 py-1 rounded bg-slate-100 text-slate-800 border border-slate-300">
-                    {student.admission_category?.replace('_', ' ') || 'GENERAL'}
+                    {safeStr(student.admission_category, 'GENERAL').toUpperCase()}
                   </span>
                 </div>
               )}
@@ -671,7 +690,7 @@ export const StudentDetail: React.FC = () => {
                 </select>
               ) : (
                 <p className="text-sm font-semibold text-gray-900 capitalize">
-                  {student.nri_category?.replace('_', ' ') || 'Not Applicable'}
+                  {safeStr(student.nri_category, 'Not Applicable')}
                 </p>
               )}
             </div>
@@ -692,7 +711,7 @@ export const StudentDetail: React.FC = () => {
                 </select>
               ) : (
                 <p className="text-sm font-semibold text-gray-900 capitalize">
-                  {student.oci_status?.replace('_', ' ') || 'Not Applicable'}
+                  {safeStr(student.oci_status, 'Not Applicable')}
                 </p>
               )}
             </div>
@@ -713,7 +732,7 @@ export const StudentDetail: React.FC = () => {
                 </select>
               ) : (
                 <p className="text-sm font-semibold text-gray-900 capitalize">
-                  {student.foreign_national_status?.replace('_', ' ') || 'Not Applicable'}
+                  {safeStr(student.foreign_national_status, 'Not Applicable')}
                 </p>
               )}
             </div>
@@ -738,7 +757,7 @@ export const StudentDetail: React.FC = () => {
                 </select>
               ) : (
                 <p className="text-sm font-semibold text-indigo-900 capitalize bg-indigo-50/70 border border-indigo-200 px-2.5 py-1 rounded-lg inline-block">
-                  {student.supernumerary_category?.replace('_', ' ') || 'None'}
+                  {safeStr(student.supernumerary_category, 'None')}
                 </p>
               )}
             </div>
@@ -749,7 +768,7 @@ export const StudentDetail: React.FC = () => {
                 Record Ingestion Date
               </label>
               <p className="text-xs font-medium text-gray-600 font-mono">
-                {new Date(student.created_at).toLocaleString()}
+                {safeDate(student.created_at)}
               </p>
             </div>
 
@@ -758,7 +777,7 @@ export const StudentDetail: React.FC = () => {
                 Last System Audit
               </label>
               <p className="text-xs font-medium text-gray-600 font-mono">
-                {new Date(student.updated_at).toLocaleString()}
+                {safeDate(student.updated_at)}
               </p>
             </div>
           </div>
@@ -851,7 +870,7 @@ export const StudentDetail: React.FC = () => {
                 <div key={h.id} className="p-4">
                   <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                     <span className="font-semibold text-gray-900">Version {h.version}</span>
-                    <span>{new Date(h.created_at).toLocaleString()}</span>
+                    <span>{safeDate(h.created_at)}</span>
                   </div>
                   <p className="text-xs text-gray-600">
                     Modified by: <span className="font-medium text-gray-800">{h.changed_by}</span>
@@ -1066,7 +1085,7 @@ export const StudentDetail: React.FC = () => {
                   <div key={pr.reconciliation_id || (pr as any).id || idx} className="p-4 flex items-center justify-between text-xs">
                     <div>
                       <div className="font-semibold text-gray-900 capitalize">{pr.document_type.replace('_', ' ')}: {pr.file_name}</div>
-                      <div className="text-gray-400">{new Date(pr.created_at).toLocaleString()}</div>
+                      <div className="text-gray-400">{safeDate(pr.created_at)}</div>
                     </div>
                     <div className="flex items-center space-x-3">
                       <span className="font-bold text-indigo-700">{(pr.confidence_score * 100).toFixed(1)}%</span>

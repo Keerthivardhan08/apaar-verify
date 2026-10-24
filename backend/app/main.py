@@ -53,8 +53,17 @@ from app.api import (
 async def lifespan(app: FastAPI):
     """Application startup and shutdown events."""
     # Create tables if they don't exist (for development/demo)
-    # In production, use Alembic migrations instead
     Base.metadata.create_all(bind=engine)
+    if settings.DEMO_MODE:
+        try:
+            import sys
+            backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            if backend_dir not in sys.path:
+                sys.path.insert(0, backend_dir)
+            from seed_data import seed
+            seed()
+        except Exception as e:
+            print(f"Auto-seed note: {e}")
     yield
     # Cleanup on shutdown (if needed)
 
@@ -129,7 +138,10 @@ async def health_check():
 
 
 # ─── Static Frontend Serving (Single-Port Production Deployment) ─────────────
-frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
+frontend_dist = os.environ.get(
+    "FRONTEND_DIST",
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")),
+)
 assets_dir = os.path.join(frontend_dist, "assets")
 
 if os.path.exists(assets_dir):

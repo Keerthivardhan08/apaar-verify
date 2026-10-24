@@ -1,0 +1,29 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+*.db
+*.sqlite3
+
+# Node
+node_modules/
+frontend/node_modules/
+.vite/
+*.log
+
+# Docs & walkthrough
+*.docx
+*.pdf
+generate_walkthrough_documents.py

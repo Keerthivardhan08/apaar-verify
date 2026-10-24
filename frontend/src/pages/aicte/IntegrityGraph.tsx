@@ -61,7 +61,7 @@ export const IntegrityGraph: React.FC = () => {
     queryKey: ['integrity-graph', selectedCycle],
     queryFn: async () => {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:8000/api/v1/graph/data', {
+      const res = await axios.get('/api/v1/graph/data', {
         params: { admission_cycle: selectedCycle },
         headers: { Authorization: `Bearer ${token}` },
       });

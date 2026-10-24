@@ -1,0 +1,14 @@
+services:
+  apaar-verify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: apaar-verify:latest
+    container_name: apaar-verify-app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEMO_MODE=true
+      - PORT=8000
+      - DATABASE_URL=sqlite:///./apaar.db
+    restart: unless-stopped

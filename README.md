@@ -5,10 +5,46 @@
 [![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6.svg)](https://www.typescriptlang.org)
 [![Security](https://img.shields.io/badge/PKI-RS256%20%7C%20RFC%207517%20JWKS-indigo.svg)]()
-[![Tests](https://img.shields.io/badge/Tests-31%20Passed%20(100%25)-success.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-32%20Passed%20(100%25)-success.svg)]()
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Keerthivardhan08/apaar-verify)
 
 > **⚠️ DEMONSTRATION & PROTOTYPE NOTICE**  
 > APAAR Verify is an architectural and engineering prototype designed for the Smart India Hackathon. All student records, institutional figures, and verification responses shown are synthetic. Identity queries are simulated and do **NOT** constitute an official Ministry of Education or AICTE determination.
+
+---
+
+## 🚀 1-Click Permanent Cloud Deployment (Zero Tunneling)
+
+Deploy the complete unified full-stack application (FastAPI backend + React SPA frontend) directly to production in 1 click:
+
+### Option 1: 1-Click Deploy on Render (Recommended)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Keerthivardhan08/apaar-verify)
+
+1. Click the **Deploy to Render** button above or navigate to:  
+   👉 **`https://render.com/deploy?repo=https://github.com/Keerthivardhan08/apaar-verify`**
+2. Sign in with your GitHub account. Render automatically parses the `render.yaml` Blueprint.
+3. Click **Apply**. Render will automatically build the multi-stage Docker container, initialize synthetic seed data, and launch your permanent HTTPS URL (e.g. `https://apaar-verify.onrender.com`).
+4. Any future `git push` to your GitHub repository triggers automated zero-downtime continuous deployment.
+
+### Option 2: 1-Click Deploy on Koyeb
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/apps/deploy?repository=Keerthivardhan08/apaar-verify&branch=main&builder=dockerfile)
+
+1. Open Koyeb: `https://app.koyeb.com/apps/deploy?repository=Keerthivardhan08/apaar-verify&branch=main&builder=dockerfile`
+2. Select **Dockerfile** as builder.
+3. Koyeb serves the container on a global edge CDN with a permanent public URL (e.g. `https://apaar-verify.koyeb.app`).
+
+### Option 3: Universal Docker Container (Any VPS or Local)
+```bash
+# Clone the repository
+git clone https://github.com/Keerthivardhan08/apaar-verify.git
+cd apaar-verify
+
+# Build & launch the container
+docker compose up -d
+
+# Open the unified web application
+open http://localhost:8000
+```
 
 ---
 
@@ -27,6 +63,7 @@ flowchart TD
         H --> I["Composite Risk Scoring Studio (0-100)"]
         H --> J["Topological Admission Integrity Graph"]
         H --> K["Multi-Stage Correction Reconciliation"]
+        H --> L2["Real-Time Issue Resolution & Auto-Recovery"]
     end
 
     subgraph SecurityTrust["Cryptographic Trust & Privacy Layer"]
@@ -75,7 +112,7 @@ If you prefer to start services independently:
 
 ### Step 1: Clone Repository
 ```bash
-git clone https://github.com/Keerthivardhan08/apaar-verify
+git clone https://github.com/Keerthivardhan08/apaar-verify.git
 cd apaar-verify
 ```
 
@@ -121,9 +158,9 @@ npm run dev
 
 | Role | Email | Password | Primary Workflow |
 |---|---|---|---|
-| **AICTE Administrator** | `admin@aicte.gov.in` | `Demo@1234` | National command center, topological graph, risk studio, intake limits |
+| **AICTE Administrator** | `admin@aicte.gov.in` | `Demo@1234` | National command center, topological graph, risk studio, statutory compliance reports |
 | **AICTE Reviewer** | `reviewer@aicte.gov.in` | `Demo@1234` | Investigate anomalies, review expanded corrections, audit logs |
-| **IIT Demo Operator** | `operator@iit-demo.edu` | `Demo@1234` | Batch uploads, student records, interactive OCR reconciliation |
+| **IIT Demo Operator** | `operator@iit-demo.edu` | `Demo@1234` | Batch uploads, student records, degree certificates with APAAR ID, real-time issue solver |
 | **NIT Demo Operator** | `operator@nit-demo.edu` | `Demo@1234` | Isolated institutional tenant with independent student data |
 | **Public Verifier** | Anonymous / Public | N/A | QR scanning and cryptographic token verification (`/verify`) |
 
@@ -131,46 +168,41 @@ npm run dev
 
 ## 5. Key Feature Highlights
 
-### Phase 1: Reliable Data Integrity (MVP Core)
+### Core Integrity & Real-Time Resolution
 - **9 Deterministic Integrity Rules:** Required fields, APAAR ID syntax regex, external verification status, local deduplication, cross-institution duplicate syndicates, capacity limit breaches, admission category consistency, approval registry concordance, and high-frequency update churn.
+- **Real-Time Issue Resolution & Live Status:** Operators can resolve compliance discrepancies in real-time with documented justification, automatically transitioning flagged records back to compliant submitted status upon correction.
 - **Two-Phase CSV Staging Pipeline:** Format and schema validation prior to atomic database commitment, with formula injection protection (`=`, `+`, `-`, `@`).
-- **Strict Role-Based Multi-Tenancy:** Institutional operators are cryptographically restricted to their own institution's data.
-- **Topological Integrity Graph:** Interactive network graph connecting Institutions, Programs, Admission Cycles, and Student Records.
 
-### Phase 2: Enterprise Cryptographic Trust
+### Enterprise Security, RBAC & Consent Framework (Feature 8)
 - **Asymmetric RS256 PKI:** RSA-2048 managed keypair signing verifiable credential tokens with `kid: apaar-rsa-2026-v1`.
 - **RFC 7517 Dynamic JWKS:** Public key discovery endpoint at `GET /api/v1/.well-known/jwks.json` enabling offline, zero-trust third-party verification.
 - **Purpose-Bound Data Minimization:** 5 scoped disclosure policies (`admission_verification`, `scholarship_eligibility`, `employment_screening`, `exam_registration`, `minimal_proof`).
+- **Tamper-Evident SHA-256 Hash-Chained Audit Ledger:** Immutable audit trail tracking every query, login, upload, and status modification.
 
-### Phase 3: Integration & Reconciliation Network
-- **Direct Campus ERP Ingestion:** Machine-to-machine batch push via `X-Institution-API-Key` headers with SHA-256 hashed key storage.
-- **Authoritative Master Synchronization:** Intake capacity variance engine reconciling institutional submissions against official AICTE sanctioned ceilings.
-- **30-Day Mandatory SLA Tracker:** Regulatory source freshness monitoring alerting on stale institutional data.
-- **Expanded Correction Workflows:** Multi-tiered reconciliation (Operator &rarr; Inst Admin &rarr; AICTE Reviewer).
-- **Zero-Knowledge Blinded Proofs:** Cryptographic assertions of student status without exposing personal identifiers.
+### Statutory Regulatory Reporting & Analytics (Feature 9)
+- **AICTE & State Regulatory Reports:** Comprehensive statutory compliance reports with filters for institutional type, risk tier, and discrepancy category.
+- **Export Capabilities:** Multi-format automated export (CSV, JSON, print-ready formats) for regulatory audits, accreditation committees, and policy-making.
 
-### Phase 4: Advanced Integrity Analytics & OCR
-- **Composite Risk Scoring Engine:** Quantitative institutional integrity index ($0\text{–}100$) categorized into Risk Tiers (`CRITICAL_RISK`, `HIGH_RISK`, `MODERATE_RISK`, `LOW_RISK`).
-- **Ingestion Velocity & Forecasting:** 6-month historical time series and 30-day forward moving-average anomaly projection.
-- **Model Performance Studio:** Decision concordance and precision metrics ($96\%+$ average precision) across all 9 validation rule engines.
-- **OCR-Assisted Document Reconciliation:** Fuzzy field comparison (`difflib`) between scanned paper credentials (marksheets, diplomas) and database records, automatically generating `DOCUMENT_DATA_MISMATCH` compliance flags on conflict.
+### Official Degree Certificates with APAAR ID (Feature 10)
+- **Dual Identity Printing:** Displays official 12-digit APAAR ID alongside Institutional Student ID on high-fidelity degree and provisional certificates.
+- **Embedded Verifiable QR Code:** Real-time scannable QR code resolving to the zero-trust public credential verifier (`/verify`).
 
 ---
 
 ## 6. Running Automated Tests
 
-Run the complete test suite across all 4 phases:
+Run the complete test suite across all modules:
 ```bash
 cd backend
 python -m pytest -v
 ```
-**Test Result: 31 of 31 tests passing (100% pass rate, 0 errors, 0 warnings).**
+**Test Result: 32 of 32 tests passing (100% pass rate, 0 errors, 0 warnings).**
 
 ---
 
 ## 7. Walkthrough Documents
 
-Step-by-step demonstration walkthrough guides covering all 7 interactive scenarios:
+Step-by-step demonstration walkthrough guides covering all interactive scenarios:
 - **PDF Format:** [APAAR_Verify_Demo_Walkthrough.pdf](APAAR_Verify_Demo_Walkthrough.pdf)
 - **Word Format:** [APAAR_Verify_Demo_Walkthrough.docx](APAAR_Verify_Demo_Walkthrough.docx)
 

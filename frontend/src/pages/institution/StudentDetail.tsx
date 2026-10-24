@@ -1534,7 +1534,7 @@ export const StudentDetail: React.FC = () => {
                       <div>
                         <span className="text-slate-400 block">Public Trust URI:</span>
                         <a
-                          href="http://localhost:8000/api/v1/.well-known/jwks.json"
+                          href="/api/v1/.well-known/jwks.json"
                           target="_blank"
                           rel="noreferrer"
                           className="text-indigo-400 hover:text-indigo-300 underline"
@@ -1573,7 +1573,7 @@ export const StudentDetail: React.FC = () => {
                   </span>
                   <div className="p-3 bg-white rounded-2xl shadow-sm border border-indigo-200">
                     <img
-                      src={`http://localhost:8000${credData.qr_endpoint}`}
+                      src={credData.qr_endpoint}
                       alt="Verifiable Credential QR"
                       className="w-44 h-44 object-contain"
                     />
@@ -1582,7 +1582,7 @@ export const StudentDetail: React.FC = () => {
                     Scan using any camera or the APAAR Public Verifier to validate credential integrity in real time.
                   </p>
                   <a
-                    href={`http://localhost:8000${credData.qr_endpoint}`}
+                    href={credData.qr_endpoint}
                     download={`${student.student_name}_verifiable_qr.png`}
                     className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:text-indigo-900 pt-1"
                   >

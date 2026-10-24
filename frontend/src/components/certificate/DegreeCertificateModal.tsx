@@ -215,7 +215,7 @@ export const DegreeCertificateModal: React.FC<DegreeCertificateModalProps> = ({
                 <div className="flex flex-col items-center justify-center space-y-1.5">
                   <div className="p-1.5 bg-white border border-amber-300 rounded-lg shadow-xs">
                     <img
-                      src={`http://localhost:8000${data.qr_endpoint}`}
+                      src={data.qr_endpoint}
                       alt="Degree Verification QR"
                       className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
                     />

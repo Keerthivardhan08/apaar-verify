@@ -624,7 +624,7 @@ export const VerifyCredential: React.FC = () => {
             </span>
           </div>
           <a
-            href="http://localhost:8000/api/v1/.well-known/jwks.json"
+            href="/api/v1/.well-known/jwks.json"
             target="_blank"
             rel="noreferrer"
             className="text-xs font-mono font-bold text-indigo-700 hover:text-indigo-950 underline flex items-center gap-1 shrink-0"

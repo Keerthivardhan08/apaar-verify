@@ -34,6 +34,7 @@ import Analytics from './pages/aicte/Analytics';
 import IntegrityGraph from './pages/aicte/IntegrityGraph';
 import { Integrations } from './pages/aicte/Integrations';
 import { FreshnessMonitor } from './pages/aicte/FreshnessMonitor';
+import InstitutionComplianceDashboard from './pages/aicte/InstitutionComplianceDashboard';
 
 // Verification Pages
 import VerifyCredential from './pages/verification/VerifyCredential';
@@ -103,6 +104,7 @@ export const App: React.FC = () => {
           <Route path="issues" element={<ValidationIssues />} />
           <Route path="corrections" element={<Corrections />} />
           <Route path="intake" element={<IntakeMonitoring />} />
+          <Route path="compliance" element={<InstitutionComplianceDashboard />} />
           <Route path="reports" element={<Reports />} />
           <Route path="api-keys" element={<InstitutionalApi />} />
         </Route>
@@ -120,6 +122,7 @@ export const App: React.FC = () => {
         <Route element={<AICTELayout />}>
           <Route index element={<AICTEOverview />} />
           <Route path="institutions" element={<Institutions />} />
+          <Route path="institutions/:id" element={<InstitutionComplianceDashboard />} />
           <Route path="integrity" element={<IntegrityMonitoring />} />
           <Route path="reviews" element={<ReviewQueue />} />
           <Route path="reviews/:id" element={<ReviewDetail />} />

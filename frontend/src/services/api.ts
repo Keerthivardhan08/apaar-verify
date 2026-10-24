@@ -158,6 +158,12 @@ export const institutionApi = {
     const response = await apiClient.get<InstitutionStats>(`/institutions/${id}/stats`);
     return response.data;
   },
+
+  getComplianceDashboard: async (id: string, cycle?: string): Promise<any> => {
+    const params = cycle ? { cycle } : {};
+    const response = await apiClient.get<any>(`/institutions/${id}/compliance-dashboard`, { params });
+    return response.data;
+  },
 };
 
 // ============================================================

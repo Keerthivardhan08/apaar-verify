@@ -174,3 +174,135 @@ def get_intake_limits(
         query = query.filter(IntakeLimit.admission_cycle == cycle)
 
     return query.all()
+
+
+
+@router.get("/institutions/{id}/compliance-dashboard")
+def get_institution_compliance_dashboard(
+    id: uuid.UUID,
+    cycle: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Comprehensive College Compliance & Quota Dashboard.
+    Provides:
+    - Approved Intake vs Actual Student Enrolment
+    - Supernumerary Seats Breakdown (NRI, FN, Kashmiri Migrant, Other)
+    - NRI Category Breakdown
+    - OCI Status Breakdown
+    - Foreign National (FN) Status Breakdown
+    - Detailed Student Roster with relevant enrollment metadata
+    """
+    require_institution_access(current_user, id)
+    inst = db.query(Institution).filter(Institution.id == id).first()
+    if not inst:
+        raise HTTPException(status_code=404, detail="Institution not found")
+
+    if not cycle:
+        latest_intake = db.query(IntakeLimit.admission_cycle).order_by(IntakeLimit.admission_cycle.desc()).first()
+        cycle = latest_intake[0] if latest_intake else "2026-27"
+
+    programs = db.query(Program).filter(Program.institution_id == id, Program.status == "active").all()
+    program_ids = [p.id for p in programs]
+
+    intake_limits = (
+        db.query(IntakeLimit)
+        .filter(IntakeLimit.program_id.in_(program_ids), IntakeLimit.admission_cycle == cycle)
+        .all()
+    ) if program_ids else []
+
+    intake_map = {il.program_id: il.approved_capacity for il in intake_limits}
+
+    all_students = db.query(StudentRecord).filter(
+        StudentRecord.institution_id == id,
+        StudentRecord.admission_cycle == cycle,
+    ).order_by(StudentRecord.created_at.desc()).all()
+
+    admitted_students = [s for s in all_students if s.admission_status == "admitted"]
+    total_enrolled = len(admitted_students)
+    total_approved_intake = sum(intake_map.values()) if intake_map else sum([il.approved_capacity for il in intake_limits])
+
+    supernumerary_students = [s for s in admitted_students if s.supernumerary_category and s.supernumerary_category != "none"]
+    supernumerary_total = len(supernumerary_students)
+    supernumerary_breakdown = {
+        "nri": sum(1 for s in admitted_students if s.supernumerary_category == "nri"),
+        "foreign_national": sum(1 for s in admitted_students if s.supernumerary_category == "foreign_national"),
+        "kashmiri_migrant": sum(1 for s in admitted_students if s.supernumerary_category == "kashmiri_migrant"),
+        "other": sum(1 for s in admitted_students if s.supernumerary_category == "other"),
+        "none": sum(1 for s in admitted_students if s.supernumerary_category in (None, "", "none")),
+    }
+
+    nri_count = sum(1 for s in admitted_students if s.nri_category == "applicable")
+    oci_count = sum(1 for s in admitted_students if s.oci_status == "applicable")
+    fn_count = sum(1 for s in admitted_students if s.foreign_national_status == "applicable")
+
+    from collections import Counter
+    categories_counter = Counter(s.admission_category for s in admitted_students)
+
+    prog_dict = {p.id: p for p in programs}
+    program_summary = []
+    for p in programs:
+        p_enrolled = sum(1 for s in admitted_students if s.program_id == p.id)
+        p_capacity = intake_map.get(p.id, 0)
+        p_pct = round((p_enrolled / p_capacity * 100), 1) if p_capacity > 0 else 0.0
+        program_summary.append({
+            "program_id": str(p.id),
+            "program_code": p.program_code,
+            "program_name": p.program_name,
+            "approved_capacity": p_capacity,
+            "enrolled_count": p_enrolled,
+            "utilization_pct": p_pct,
+            "status": "BREACHED" if p_pct > 100 else ("OPTIMAL" if p_pct >= 80 else "AVAILABLE"),
+        })
+
+    student_roster = []
+    for s in all_students:
+        prog = prog_dict.get(s.program_id)
+        issue_count = db.query(ValidationIssue).filter(ValidationIssue.record_id == s.id, ValidationIssue.status == "open").count()
+        student_roster.append({
+            "id": str(s.id),
+            "student_name": s.student_name,
+            "institution_student_id": s.institution_student_id,
+            "identity_reference": s.identity_reference,
+            "date_of_birth": s.date_of_birth.isoformat() if s.date_of_birth else None,
+            "gender": s.gender,
+            "program_code": prog.program_code if prog else "N/A",
+            "program_name": prog.program_name if prog else "N/A",
+            "admission_category": s.admission_category,
+            "admission_status": s.admission_status,
+            "nri_category": s.nri_category,
+            "oci_status": s.oci_status,
+            "foreign_national_status": s.foreign_national_status,
+            "supernumerary_category": s.supernumerary_category,
+            "record_status": s.record_status,
+            "open_issues_count": issue_count,
+        })
+
+    overall_utilization = round((total_enrolled / total_approved_intake * 100), 1) if total_approved_intake > 0 else 0.0
+
+    return {
+        "institution": {
+            "id": str(inst.id),
+            "name": inst.name,
+            "institution_code": inst.institution_code,
+            "institution_type": inst.institution_type,
+            "state": inst.state,
+            "city": inst.city,
+            "status": inst.status,
+        },
+        "admission_cycle": cycle,
+        "metrics": {
+            "approved_intake": total_approved_intake,
+            "actual_enrolment": total_enrolled,
+            "utilization_pct": overall_utilization,
+            "supernumerary_seats": supernumerary_total,
+            "nri_count": nri_count,
+            "oci_count": oci_count,
+            "foreign_national_count": fn_count,
+        },
+        "supernumerary_breakdown": supernumerary_breakdown,
+        "category_distribution": dict(categories_counter),
+        "programs": program_summary,
+        "students": student_roster,
+    }

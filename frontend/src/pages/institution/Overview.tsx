@@ -105,6 +105,14 @@ export const InstitutionOverview: React.FC = () => {
           >
             View Students
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/institution/compliance')}
+            icon={<FileSpreadsheet className="w-4 h-4" />}
+            className="text-white border-indigo-300 hover:bg-white/10"
+          >
+            Quota & Intake Desk
+          </Button>
         </div>
       </div>
 

@@ -468,4 +468,61 @@ export interface BlindedProof {
   evidence_notes: string;
 }
 
+export interface ComplianceStudentRosterItem {
+  id: string;
+  student_name: string;
+  institution_student_id: string;
+  identity_reference?: string | null;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  program_code: string;
+  program_name: string;
+  admission_category: string;
+  admission_status: string;
+  nri_category?: string;
+  oci_status?: string;
+  foreign_national_status?: string;
+  supernumerary_category?: string;
+  record_status: string;
+  open_issues_count: number;
+}
 
+export interface InstitutionComplianceData {
+  institution: {
+    id: string;
+    name: string;
+    institution_code: string;
+    institution_type: string;
+    state: string;
+    city: string;
+    status: string;
+  };
+  admission_cycle: string;
+  metrics: {
+    approved_intake: number;
+    actual_enrolment: number;
+    utilization_pct: number;
+    supernumerary_seats: number;
+    nri_count: number;
+    oci_count: number;
+    foreign_national_count: number;
+  };
+  supernumerary_breakdown: {
+    nri: number;
+    foreign_national: number;
+    kashmiri_migrant: number;
+    other: number;
+    none: number;
+  };
+  category_distribution: Record<string, number>;
+  programs: Array<{
+    program_id: string;
+    program_code: string;
+    program_name: string;
+    approved_capacity: number;
+    enrolled_count: number;
+    utilization_pct: number;
+    status: string;
+  }>;
+  students: ComplianceStudentRosterItem[];
+}

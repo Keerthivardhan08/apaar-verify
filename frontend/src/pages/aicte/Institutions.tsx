@@ -149,14 +149,21 @@ export const Institutions: React.FC = () => {
       className: 'text-right',
       headerClassName: 'text-right',
       render: (row) => (
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-end gap-1.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setSelectedInst(row)}
+          >
+            Quick View
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => navigate(`/aicte/institutions/${row.id}`)}
             icon={<ExternalLink className="w-3.5 h-3.5" />}
           >
-            Details
+            Compliance Desk
           </Button>
         </div>
       ),
@@ -191,7 +198,7 @@ export const Institutions: React.FC = () => {
         isLoading={isLoading}
         isError={isError}
         onRetry={refetch}
-        onRowClick={(row) => setSelectedInst(row)}
+        onRowClick={(row) => navigate(`/aicte/institutions/${row.id}`)}
         emptyTitle="No Institutions Found"
         emptyDescription="No registered institutions matched your search criteria."
       />
@@ -236,7 +243,7 @@ export const Institutions: React.FC = () => {
                 Close
               </Button>
               <Button
-                variant="primary"
+                variant="secondary"
                 size="sm"
                 onClick={() => {
                   setSelectedInst(null);
@@ -244,6 +251,18 @@ export const Institutions: React.FC = () => {
                 }}
               >
                 Inspect Integrity Flags
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  const id = selectedInst.id;
+                  setSelectedInst(null);
+                  navigate(`/aicte/institutions/${id}`);
+                }}
+                icon={<ExternalLink className="w-3.5 h-3.5" />}
+              >
+                Open Compliance & Intake Dashboard
               </Button>
             </div>
           </div>

@@ -61,8 +61,13 @@ class StudentRecordOut(BaseModel):
     id: uuid.UUID
     institution_id: uuid.UUID
     program_id: uuid.UUID
+    program_name: Optional[str] = None
+    program_code: Optional[str] = None
+    institution_name: Optional[str] = None
+    institution_code: Optional[str] = None
     student_identity_id: Optional[uuid.UUID] = None
     identity_reference: Optional[str] = None
+    apaar_id: Optional[str] = None
     masked_identity_reference: Optional[str] = None
     admission_cycle: str
     institution_student_id: str

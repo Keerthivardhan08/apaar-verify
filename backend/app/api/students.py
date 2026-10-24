@@ -155,6 +155,13 @@ def create_student(
 
     res = StudentRecordOut.model_validate(rec)
     res.masked_identity_reference = _mask_reference(rec.identity_reference)
+    res.apaar_id = rec.identity_reference
+    if rec.program:
+        res.program_name = rec.program.program_name
+        res.program_code = rec.program.program_code
+    if rec.institution:
+        res.institution_name = rec.institution.name
+        res.institution_code = rec.institution.institution_code
     return res
 
 
@@ -312,6 +319,13 @@ def get_student_by_id(
 
     res = StudentRecordOut.model_validate(rec)
     res.masked_identity_reference = _mask_reference(rec.identity_reference)
+    res.apaar_id = rec.identity_reference
+    if rec.program:
+        res.program_name = rec.program.program_name
+        res.program_code = rec.program.program_code
+    if rec.institution:
+        res.institution_name = rec.institution.name
+        res.institution_code = rec.institution.institution_code
     return res
 
 
@@ -393,6 +407,13 @@ def update_student(
 
     res = StudentRecordOut.model_validate(rec)
     res.masked_identity_reference = _mask_reference(rec.identity_reference)
+    res.apaar_id = rec.identity_reference
+    if rec.program:
+        res.program_name = rec.program.program_name
+        res.program_code = rec.program.program_code
+    if rec.institution:
+        res.institution_name = rec.institution.name
+        res.institution_code = rec.institution.institution_code
     return res
 
 

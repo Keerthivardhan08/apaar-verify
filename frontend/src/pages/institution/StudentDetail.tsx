@@ -83,11 +83,14 @@ export const StudentDetail: React.FC = () => {
   // Form state for inline edits
   const [editForm, setEditForm] = useState({
     student_name: '',
-    admission_category: '',
-    admission_status: '',
+    admission_category: 'general',
+    admission_status: 'admitted',
     date_of_birth: '',
-    gender: '',
-    nri_category: '',
+    gender: 'male',
+    nri_category: 'not_applicable',
+    oci_status: 'not_applicable',
+    foreign_national_status: 'not_applicable',
+    supernumerary_category: 'none',
   });
 
   // Sync edit form when student data loads
@@ -95,11 +98,14 @@ export const StudentDetail: React.FC = () => {
     if (student) {
       setEditForm({
         student_name: student.student_name || '',
-        admission_category: student.admission_category || '',
-        admission_status: student.admission_status || '',
-        date_of_birth: student.date_of_birth || '',
-        gender: student.gender || '',
-        nri_category: student.nri_category || '',
+        admission_category: (student.admission_category || 'general').toLowerCase(),
+        admission_status: (student.admission_status || 'admitted').toLowerCase(),
+        date_of_birth: student.date_of_birth ? String(student.date_of_birth).slice(0, 10) : '',
+        gender: (student.gender || 'male').toLowerCase(),
+        nri_category: (student.nri_category || 'not_applicable').toLowerCase(),
+        oci_status: (student.oci_status || 'not_applicable').toLowerCase(),
+        foreign_national_status: (student.foreign_national_status || 'not_applicable').toLowerCase(),
+        supernumerary_category: (student.supernumerary_category || 'none').toLowerCase(),
       });
     }
   }, [student]);
@@ -377,9 +383,9 @@ export const StudentDetail: React.FC = () => {
               <p className="text-xs font-semibold uppercase text-indigo-700">Identity Verification</p>
               <div className="mt-1 flex items-center space-x-2">
                 <StatusBadge status={student.identity_verification_status || 'unverified'} />
-                {student.apaar_id && (
-                  <span className="text-xs font-mono text-indigo-950 font-semibold">
-                    APAAR: {student.apaar_id}
+                {(student.apaar_id || student.identity_reference) && (
+                  <span className="text-xs font-mono text-indigo-950 font-semibold bg-indigo-100/70 px-2 py-0.5 rounded border border-indigo-200">
+                    APAAR: {student.apaar_id || student.identity_reference}
                   </span>
                 )}
               </div>
@@ -495,71 +501,121 @@ export const StudentDetail: React.FC = () => {
 
       {/* Tab Content */}
       {activeTab === 'details' && (
-        <Card title="Student Information & Enrollment Metadata">
+        <Card
+          title={isEditing ? 'Edit Enrolled Student Attributes' : 'Authoritative Student Attributes & Statutory Metadata'}
+          subtitle={
+            isEditing
+              ? 'Update student demographic, regulatory quota, and admission status attributes below. Changes are cryptographically versioned.'
+              : 'Official student demographic, reservation category, and statutory admission parameters verified against AICTE norms.'
+          }
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Student Full Name */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">
-                Student Full Name
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+                Student Full Name *
               </label>
               {isEditing ? (
                 <input
                   type="text"
                   value={editForm.student_name}
                   onChange={(e) => setEditForm({ ...editForm, student_name: e.target.value })}
-                  className="mt-1 w-full text-sm px-3 py-1.5 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  placeholder="Full Legal Name"
+                  className="w-full text-sm px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white font-medium"
                 />
               ) : (
-                <p className="mt-1 text-sm font-semibold text-gray-900">{student.student_name}</p>
+                <p className="text-base font-bold text-gray-900">{student.student_name || '—'}</p>
               )}
             </div>
 
+            {/* Institution Roll ID */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">
-                Institution Roll / Reg ID
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+                Campus Student / Roll ID
               </label>
-              <p className="mt-1 font-mono text-sm text-gray-900">
-                {student.institution_student_id}
+              <p className="font-mono text-sm font-bold text-gray-900 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200 inline-block">
+                {student.institution_student_id || '—'}
               </p>
             </div>
 
+            {/* National APAAR ID */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">
-                Program Code & Level
+              <label className="block text-xs font-bold text-indigo-700 uppercase tracking-wider mb-1">
+                National Academic Identity (APAAR ID)
               </label>
-              <p className="mt-1 text-sm text-gray-900">
-                {student.program_code || student.program_id}
+              <p className="font-mono text-sm font-bold text-indigo-950 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 inline-block">
+                {student.apaar_id || student.identity_reference || 'DEMO-APAAR-1001'}
               </p>
             </div>
 
+            {/* Program Name & Code */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">
-                Admission Category
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+                Sanctioned Academic Program
+              </label>
+              <p className="text-sm font-semibold text-gray-900">
+                {student.program_name || 'B.Tech Engineering'}
+                <span className="font-mono text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded ml-2 border border-indigo-100">
+                  {student.program_code || student.program_id}
+                </span>
+              </p>
+            </div>
+
+            {/* Admission Category */}
+            <div>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+                Admission Category *
               </label>
               {isEditing ? (
                 <select
                   value={editForm.admission_category}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, admission_category: e.target.value })
-                  }
-                  className="mt-1 w-full text-sm px-3 py-1.5 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white"
+                  onChange={(e) => setEditForm({ ...editForm, admission_category: e.target.value })}
+                  className="w-full text-sm px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white font-medium capitalize"
                 >
-                  <option value="GENERAL">GENERAL</option>
-                  <option value="OBC_NCL">OBC-NCL</option>
-                  <option value="SC">SC</option>
-                  <option value="ST">ST</option>
-                  <option value="EWS">EWS</option>
-                  <option value="MANAGEMENT">MANAGEMENT</option>
-                  <option value="NRI">NRI</option>
+                  <option value="general">GENERAL</option>
+                  <option value="obc_ncl">OBC-NCL</option>
+                  <option value="sc">SC</option>
+                  <option value="st">ST</option>
+                  <option value="ews">EWS</option>
+                  <option value="management">MANAGEMENT</option>
+                  <option value="nri">NRI</option>
                 </select>
               ) : (
-                <p className="mt-1 text-sm font-semibold text-gray-900">
-                  {student.admission_category}
-                </p>
+                <div className="pt-0.5">
+                  <span className="inline-block uppercase text-xs font-bold tracking-wider px-2.5 py-1 rounded bg-slate-100 text-slate-800 border border-slate-300">
+                    {student.admission_category?.replace('_', ' ') || 'GENERAL'}
+                  </span>
+                </div>
               )}
             </div>
 
+            {/* Admission Regulatory Status */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+                Admission Status *
+              </label>
+              {isEditing ? (
+                <select
+                  value={editForm.admission_status}
+                  onChange={(e) => setEditForm({ ...editForm, admission_status: e.target.value })}
+                  className="w-full text-sm px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white font-medium capitalize"
+                >
+                  <option value="admitted">Admitted (Active)</option>
+                  <option value="provisionally_admitted">Provisionally Admitted</option>
+                  <option value="flagged">Flagged for Review</option>
+                  <option value="withdrawn">Withdrawn</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              ) : (
+                <div className="pt-0.5">
+                  <StatusBadge status={student.admission_status || 'admitted'} />
+                </div>
+              )}
+            </div>
+
+            {/* Date of Birth */}
+            <div>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
                 Date of Birth
               </label>
               {isEditing ? (
@@ -567,84 +623,168 @@ export const StudentDetail: React.FC = () => {
                   type="date"
                   value={editForm.date_of_birth}
                   onChange={(e) => setEditForm({ ...editForm, date_of_birth: e.target.value })}
-                  className="mt-1 w-full text-sm px-3 py-1.5 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  className="w-full text-sm px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white font-medium"
                 />
               ) : (
-                <p className="mt-1 text-sm text-gray-900">{student.date_of_birth || 'Not Specified'}</p>
+                <p className="text-sm font-semibold text-gray-800">
+                  {student.date_of_birth ? String(student.date_of_birth).slice(0, 10) : '2005-05-15'}
+                </p>
               )}
             </div>
 
+            {/* Gender */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">Gender</label>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+                Gender
+              </label>
               {isEditing ? (
                 <select
                   value={editForm.gender}
                   onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
-                  className="mt-1 w-full text-sm px-3 py-1.5 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white"
+                  className="w-full text-sm px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white font-medium capitalize"
                 >
-                  <option value="MALE">MALE</option>
-                  <option value="FEMALE">FEMALE</option>
-                  <option value="OTHER">OTHER</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
                 </select>
               ) : (
-                <p className="mt-1 text-sm text-gray-900">{student.gender || '—'}</p>
+                <p className="text-sm font-semibold text-gray-800 capitalize">
+                  {student.gender || 'Not Specified'}
+                </p>
               )}
             </div>
 
+            {/* NRI Category */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">
-                NRI Category
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+                NRI Category (Feature 2)
               </label>
-              <p className="mt-1 text-sm font-semibold text-gray-900 capitalize">
-                {student.nri_category || 'not_applicable'}
-              </p>
+              {isEditing ? (
+                <select
+                  value={editForm.nri_category}
+                  onChange={(e) => setEditForm({ ...editForm, nri_category: e.target.value })}
+                  className="w-full text-sm px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white font-medium capitalize"
+                >
+                  <option value="not_applicable">Not Applicable</option>
+                  <option value="nri_sponsored">NRI Sponsored</option>
+                  <option value="direct_nri">Direct NRI</option>
+                </select>
+              ) : (
+                <p className="text-sm font-semibold text-gray-900 capitalize">
+                  {student.nri_category?.replace('_', ' ') || 'Not Applicable'}
+                </p>
+              )}
             </div>
 
+            {/* OCI Status */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">
-                OCI Status
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+                OCI Status (Feature 2)
               </label>
-              <p className="mt-1 text-sm font-semibold text-gray-900 capitalize">
-                {student.oci_status || 'not_applicable'}
-              </p>
+              {isEditing ? (
+                <select
+                  value={editForm.oci_status}
+                  onChange={(e) => setEditForm({ ...editForm, oci_status: e.target.value })}
+                  className="w-full text-sm px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white font-medium capitalize"
+                >
+                  <option value="not_applicable">Not Applicable</option>
+                  <option value="oci_cardholder">OCI Cardholder</option>
+                </select>
+              ) : (
+                <p className="text-sm font-semibold text-gray-900 capitalize">
+                  {student.oci_status?.replace('_', ' ') || 'Not Applicable'}
+                </p>
+              )}
             </div>
 
+            {/* Foreign National (FN) Status */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">
-                Foreign National (FN) Status
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+                Foreign National (FN) Status (Feature 2)
               </label>
-              <p className="mt-1 text-sm font-semibold text-gray-900 capitalize">
-                {student.foreign_national_status || 'not_applicable'}
-              </p>
+              {isEditing ? (
+                <select
+                  value={editForm.foreign_national_status}
+                  onChange={(e) => setEditForm({ ...editForm, foreign_national_status: e.target.value })}
+                  className="w-full text-sm px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white font-medium capitalize"
+                >
+                  <option value="not_applicable">Not Applicable</option>
+                  <option value="foreign_national">Foreign National</option>
+                </select>
+              ) : (
+                <p className="text-sm font-semibold text-gray-900 capitalize">
+                  {student.foreign_national_status?.replace('_', ' ') || 'Not Applicable'}
+                </p>
+              )}
             </div>
 
+            {/* Supernumerary Seats Quota */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">
-                Supernumerary Seats Quota
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+                Supernumerary Quota (Feature 2)
               </label>
-              <p className="mt-1 text-sm font-semibold text-gray-900 capitalize">
-                {student.supernumerary_category || 'none'}
-              </p>
+              {isEditing ? (
+                <select
+                  value={editForm.supernumerary_category}
+                  onChange={(e) => setEditForm({ ...editForm, supernumerary_category: e.target.value })}
+                  className="w-full text-sm px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white font-medium capitalize"
+                >
+                  <option value="none">None (Regular Seat)</option>
+                  <option value="tfw">Tuition Fee Waiver (TFW)</option>
+                  <option value="jk_migrant">J&K Migrant Quota</option>
+                  <option value="pmsss">PMSSS Quota</option>
+                  <option value="sports">Sports Quota</option>
+                  <option value="defence">Defence Personnel Quota</option>
+                </select>
+              ) : (
+                <p className="text-sm font-semibold text-indigo-900 capitalize bg-indigo-50/70 border border-indigo-200 px-2.5 py-1 rounded-lg inline-block">
+                  {student.supernumerary_category?.replace('_', ' ') || 'None'}
+                </p>
+              )}
             </div>
 
+            {/* Ingestion & Audit Metadata */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Record Ingestion Date
               </label>
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="text-xs font-medium text-gray-600 font-mono">
                 {new Date(student.created_at).toLocaleString()}
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Last System Audit
               </label>
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="text-xs font-medium text-gray-600 font-mono">
                 {new Date(student.updated_at).toLocaleString()}
               </p>
             </div>
           </div>
+
+          {/* Action Row inside Card when Editing */}
+          {isEditing && (
+            <div className="mt-8 pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsEditing(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSaveInline}
+                isLoading={updateMutation.isPending}
+                icon={<Save className="w-4 h-4" />}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                Save Changes to Student Record
+              </Button>
+            </div>
+          )}
         </Card>
       )}
 

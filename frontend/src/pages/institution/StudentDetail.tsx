@@ -7,6 +7,10 @@ import {
   useIssues,
   useUpdateStudent,
   useRequestCorrection,
+  useResolveIssue,
+  useReopenIssue,
+  useRunValidation,
+  useRecordComplianceStatus,
 } from '../../hooks/useApi';
 import Card from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -73,12 +77,24 @@ export const StudentDetail: React.FC = () => {
   const [proposedValue, setProposedValue] = useState('');
   const [justification, setJustification] = useState('');
 
-  const { data: student, isLoading, isError, error, refetch } = useStudent(id);
+  // Real-Time & Issue Resolution state
+  const [isLiveSync, setIsLiveSync] = useState(true);
+  const [issueFilterTab, setIssueFilterTab] = useState<'all' | 'active' | 'resolved'>('all');
+  const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
+  const [selectedIssueToResolve, setSelectedIssueToResolve] = useState<any | null>(null);
+  const [resolveAction, setResolveAction] = useState<'resolved' | 'false_positive' | 'exception_approved'>('resolved');
+  const [resolveReason, setResolveReason] = useState('');
+
+  const { data: student, isLoading, isError, error, refetch } = useStudent(id, { refetchInterval: isLiveSync ? 8000 : false });
   const { data: history = [], isLoading: isHistoryLoading } = useStudentHistory(id);
-  const { data: issuesData } = useIssues({ page: 1, size: 50 });
+  const { data: issuesData, refetch: refetchIssues } = useIssues({ page: 1, size: 100 }, { refetchInterval: isLiveSync ? 8000 : false });
+  const { data: liveCompliance, refetch: refetchCompliance } = useRecordComplianceStatus(id, true, isLiveSync ? 8000 : false);
 
   const updateMutation = useUpdateStudent();
   const correctionMutation = useRequestCorrection();
+  const resolveMutation = useResolveIssue();
+  const reopenMutation = useReopenIssue();
+  const runValidationMutation = useRunValidation();
 
   // Form state for inline edits
   const [editForm, setEditForm] = useState({
@@ -189,8 +205,67 @@ export const StudentDetail: React.FC = () => {
     );
   }
 
-  // Filter issues associated with this student
-  const studentIssues = issuesData?.items?.filter((issue) => issue.record_id === student.id) || [];
+  // Filter issues associated with this student (real-time active vs resolved)
+  const allStudentIssues = issuesData?.items?.filter((issue) => issue.record_id === student.id) || [];
+  const activeStudentIssues = allStudentIssues.filter((i) => i.status === 'open' || i.status === 'under_review' || i.status === 'reopened');
+  const resolvedStudentIssues = allStudentIssues.filter((i) => i.status === 'resolved' || i.status === 'false_positive');
+
+  const displayedIssues =
+    issueFilterTab === 'active'
+      ? activeStudentIssues
+      : issueFilterTab === 'resolved'
+      ? resolvedStudentIssues
+      : allStudentIssues;
+
+  const handleOpenResolveModal = (issue: any) => {
+    setSelectedIssueToResolve(issue);
+    setResolveAction('resolved');
+    setResolveReason('');
+    setIsResolveModalOpen(true);
+  };
+
+  const handleConfirmResolve = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedIssueToResolve) return;
+    if (!resolveReason.trim()) {
+      toast.error('Please specify the resolution reason or document reference.');
+      return;
+    }
+
+    await resolveMutation.mutateAsync({
+      id: selectedIssueToResolve.id,
+      reason: resolveReason.trim(),
+      action: resolveAction,
+    });
+
+    setIsResolveModalOpen(false);
+    setSelectedIssueToResolve(null);
+    setResolveReason('');
+    refetch();
+    refetchIssues();
+    refetchCompliance();
+  };
+
+  const handleReopenIssue = async (issueId: string) => {
+    await reopenMutation.mutateAsync(issueId);
+    refetch();
+    refetchIssues();
+    refetchCompliance();
+  };
+
+  const handleTriggerLiveValidation = async () => {
+    if (!student?.id) return;
+    await runValidationMutation.mutateAsync({ record_id: student.id });
+    refetch();
+    refetchIssues();
+    refetchCompliance();
+  };
+
+  const handleQuickFixField = (affectedField?: string | null) => {
+    setActiveTab('details');
+    setIsEditing(true);
+    toast('Switched to Edit mode. Please correct the highlighted field and save.', { icon: '✏️' });
+  };
 
   const handleSaveInline = async () => {
     await updateMutation.mutateAsync({
@@ -427,18 +502,35 @@ export const StudentDetail: React.FC = () => {
         </Card>
 
         <Card className="bg-amber-50/40 border-amber-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-600 text-white flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-amber-600 text-white flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-amber-800">Compliance Issues</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <p className="text-sm font-bold text-amber-950">
+                    {activeStudentIssues.length === 0
+                      ? 'All Rules Passed'
+                      : `${activeStudentIssues.length} Active Flag(s)`}
+                  </p>
+                  {resolvedStudentIssues.length > 0 && (
+                    <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">
+                      {resolvedStudentIssues.length} Resolved
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-semibold uppercase text-amber-800">Compliance Issues</p>
-              <p className="text-sm font-semibold text-amber-950 mt-1">
-                {studentIssues.length === 0
-                  ? 'All Rules Passed'
-                  : `${studentIssues.length} Active Flag(s)`}
-              </p>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleTriggerLiveValidation}
+              isLoading={runValidationMutation.isPending}
+              icon={<RefreshCw className={`w-3.5 h-3.5 ${runValidationMutation.isPending ? 'animate-spin text-amber-700' : 'text-amber-700'}`} />}
+              title="Run Real-Time Compliance Check"
+            />
           </div>
         </Card>
       </div>
@@ -465,9 +557,13 @@ export const StudentDetail: React.FC = () => {
             }`}
           >
             <span>Validation Issues</span>
-            {studentIssues.length > 0 && (
+            {activeStudentIssues.length > 0 ? (
               <span className="bg-rose-100 text-rose-700 text-xs px-2 py-0.5 rounded-full font-bold">
-                {studentIssues.length}
+                {activeStudentIssues.length}
+              </span>
+            ) : (
+              <span className="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-bold">
+                ✓
               </span>
             )}
           </button>
@@ -808,49 +904,239 @@ export const StudentDetail: React.FC = () => {
       )}
 
       {activeTab === 'issues' && (
-        <Card title="Associated Validation Issues & Discrepancies" noPadding>
-          {studentIssues.length === 0 ? (
-            <div className="p-8 text-center text-gray-500 text-sm">
-              <ShieldCheck className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-              <p className="font-semibold text-gray-900">No issues flagged</p>
-              <p className="text-xs text-gray-500 mt-1">
-                This student record passed all algorithmic cross-checks and intake validations.
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {studentIssues.map((issue) => (
-                <div key={issue.id} className="p-5 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono text-xs font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
-                        {issue.rule_code}
-                      </span>
-                      <SeverityBadge severity={issue.severity} />
-                    </div>
-                    <StatusBadge status={issue.status} />
-                  </div>
-                  <p className="text-sm text-gray-800 font-medium mt-2">{issue.description}</p>
-
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <div>
-                      <span className="text-gray-500 block">Expected Condition:</span>
-                      <span className="font-mono text-emerald-700">
-                        {issue.expected_condition || '—'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 block">Observed Condition:</span>
-                      <span className="font-mono text-rose-700">
-                        {issue.observed_condition || '—'}
-                      </span>
-                    </div>
-                  </div>
+        <div className="space-y-4">
+          {/* Live Engine & Real-Time Sync Control Header */}
+          <Card className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white border-none shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-3 w-3">
+                    {isLiveSync ? (
+                      <>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                      </>
+                    ) : (
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-slate-500"></span>
+                    )}
+                  </span>
+                  <h3 className="text-base font-bold text-white">
+                    Real-Time Validation & Discrepancy Resolution
+                  </h3>
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-emerald-300 border border-emerald-400/30">
+                    {isLiveSync ? 'Live Stream Active (8s)' : 'Auto-Sync Paused'}
+                  </span>
                 </div>
-              ))}
+                <p className="text-xs text-slate-300">
+                  Instant deterministic rule evaluation. Solve issues on-the-fly, quick-fix fields, or re-validate in real time.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsLiveSync(!isLiveSync)}
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs"
+                >
+                  {isLiveSync ? 'Pause Live Polling' : 'Enable Live Polling'}
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleTriggerLiveValidation}
+                  isLoading={runValidationMutation.isPending}
+                  icon={<RefreshCw className={`w-3.5 h-3.5 ${runValidationMutation.isPending ? 'animate-spin' : ''}`} />}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold border-none text-xs"
+                >
+                  Run Live Re-validation
+                </Button>
+              </div>
             </div>
-          )}
-        </Card>
+          </Card>
+
+          {/* Issue Filter Toolbar */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-3 rounded-xl border border-gray-200">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setIssueFilterTab('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  issueFilterTab === 'all'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                All Issues ({allStudentIssues.length})
+              </button>
+              <button
+                onClick={() => setIssueFilterTab('active')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+                  issueFilterTab === 'active'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
+                }`}
+              >
+                <span>Active Flags</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[11px] font-bold">
+                  {activeStudentIssues.length}
+                </span>
+              </button>
+              <button
+                onClick={() => setIssueFilterTab('resolved')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+                  issueFilterTab === 'resolved'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                }`}
+              >
+                <span>Resolved / Cleared</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[11px] font-bold">
+                  {resolvedStudentIssues.length}
+                </span>
+              </button>
+            </div>
+
+            <div className="text-xs text-gray-500 flex items-center gap-2">
+              <span className="font-semibold text-gray-700">Record Status:</span>
+              <StatusBadge status={student.record_status} />
+            </div>
+          </div>
+
+          {/* Issues List Card */}
+          <Card noPadding>
+            {displayedIssues.length === 0 ? (
+              <div className="p-8 text-center text-gray-500 text-sm">
+                <ShieldCheck className="w-10 h-10 text-emerald-600 mx-auto mb-2" />
+                <p className="font-bold text-gray-900 text-base">
+                  {issueFilterTab === 'resolved'
+                    ? 'No resolved issues found'
+                    : 'All Rules Passed — Zero Active Flags'}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
+                  {issueFilterTab === 'resolved'
+                    ? 'When discrepancies are resolved or auto-cleared upon record updates, they appear here.'
+                    : 'This student record satisfies all 9 deterministic AICTE admission integrity cross-checks in real time.'}
+                </p>
+                {issueFilterTab === 'active' && allStudentIssues.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIssueFilterTab('all')}
+                    className="mt-3 text-xs"
+                  >
+                    View Resolved Issues ({resolvedStudentIssues.length})
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {displayedIssues.map((issue) => {
+                  const isResolved = issue.status === 'resolved' || issue.status === 'false_positive';
+                  return (
+                    <div
+                      key={issue.id}
+                      className={`p-5 transition-colors ${
+                        isResolved ? 'bg-emerald-50/30 hover:bg-emerald-50/50' : 'hover:bg-gray-50/80'
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-mono text-xs font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                            {issue.rule_code}
+                          </span>
+                          <SeverityBadge severity={issue.severity} />
+                          {isResolved ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                              <CheckCircle className="w-3 h-3 text-emerald-600" />
+                              {issue.status === 'false_positive' ? 'False Positive' : 'Resolved'}
+                            </span>
+                          ) : (
+                            <StatusBadge status={issue.status} />
+                          )}
+                        </div>
+
+                        {/* Action Buttons for this issue */}
+                        <div className="flex items-center space-x-2 pt-1 sm:pt-0">
+                          {!isResolved ? (
+                            <>
+                              {issue.affected_field && (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => handleQuickFixField(issue.affected_field)}
+                                  icon={<FileEdit className="w-3.5 h-3.5 text-indigo-600" />}
+                                  className="text-xs"
+                                >
+                                  Quick Fix Field
+                                </Button>
+                              )}
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => handleOpenResolveModal(issue)}
+                                icon={<CheckCircle className="w-3.5 h-3.5" />}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                              >
+                                Solve / Resolve Issue
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleReopenIssue(issue.id)}
+                              isLoading={reopenMutation.isPending}
+                              icon={<RefreshCw className="w-3.5 h-3.5" />}
+                              className="text-xs text-slate-600 hover:text-slate-900"
+                            >
+                              Reopen Issue
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-gray-800 font-medium mt-2">{issue.description}</p>
+
+                      {/* Discrepancy details */}
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div>
+                          <span className="text-gray-500 block font-semibold">Expected Regulatory Condition:</span>
+                          <span className="font-mono text-emerald-700">
+                            {issue.expected_condition || '—'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 block font-semibold">Observed Condition:</span>
+                          <span className="font-mono text-rose-700">
+                            {issue.observed_condition || '—'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* If resolved, show resolution details */}
+                      {isResolved && (
+                        <div className="mt-3 p-3 bg-emerald-100/60 border border-emerald-200 rounded-lg text-xs space-y-1">
+                          <div className="flex items-center justify-between text-emerald-950 font-semibold">
+                            <span className="flex items-center gap-1">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
+                              Resolution Recorded in Real Time
+                            </span>
+                            <span className="text-[11px] text-emerald-800 font-mono">
+                              {issue.resolved_at ? safeDate(issue.resolved_at) : 'Recently'}
+                            </span>
+                          </div>
+                          <p className="text-emerald-900 italic">
+                            "{issue.resolution_reason || 'Verified and reconciled by institution operator.'}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        </div>
       )}
 
       {activeTab === 'history' && (
@@ -1382,6 +1668,82 @@ export const StudentDetail: React.FC = () => {
               isLoading={correctionMutation.isPending}
             >
               Submit Request
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Interactive Issue Resolution Modal */}
+      <Modal
+        isOpen={isResolveModalOpen}
+        onClose={() => setIsResolveModalOpen(false)}
+        title="Resolve Regulatory Discrepancy"
+        subtitle="Review, record justification, and officially update this compliance flag in real time."
+        maxWidth="md"
+      >
+        <form onSubmit={handleConfirmResolve} className="space-y-4">
+          {selectedIssueToResolve && (
+            <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-gray-900 bg-gray-200/80 px-2 py-0.5 rounded">
+                  {selectedIssueToResolve.rule_code}
+                </span>
+                <SeverityBadge severity={selectedIssueToResolve.severity} />
+              </div>
+              <p className="text-gray-700 font-medium">{selectedIssueToResolve.description}</p>
+              {selectedIssueToResolve.affected_field && (
+                <p className="text-indigo-700 font-mono text-[11px]">
+                  Target Field: {selectedIssueToResolve.affected_field}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+              Resolution Action Type *
+            </label>
+            <select
+              value={resolveAction}
+              onChange={(e) => setResolveAction(e.target.value as any)}
+              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:outline-none bg-white font-medium"
+            >
+              <option value="resolved">Data Corrected & Verified (Mark as Resolved)</option>
+              <option value="false_positive">Dismiss as False Positive (System Discrepancy)</option>
+              <option value="exception_approved">Legitimate Statutory Exception Approved</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+              Resolution Reason & Verification Evidence *
+            </label>
+            <textarea
+              required
+              rows={3}
+              value={resolveReason}
+              onChange={(e) => setResolveReason(e.target.value)}
+              placeholder="Provide exact justification, reference official physical documents, or record approval notes."
+              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+            />
+          </div>
+
+          <div className="pt-3 flex justify-end space-x-2 border-t border-gray-200">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsResolveModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={resolveMutation.isPending}
+              icon={<CheckCircle className="w-4 h-4" />}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              Confirm Resolution & Live Update
             </Button>
           </div>
         </form>

@@ -386,8 +386,23 @@ export const issueApi = {
     return response.data;
   },
 
-  resolveIssue: async (id: string, resolution_reason: string): Promise<ValidationIssue> => {
-    const response = await apiClient.post<ValidationIssue>(`/issues/${id}/resolve`, { resolution_reason });
+  resolveIssue: async (id: string, resolution_reason: string, action: string = "resolved"): Promise<ValidationIssue> => {
+    const response = await apiClient.post<ValidationIssue>(`/issues/${id}/resolve`, { resolution_reason, action });
+    return response.data;
+  },
+
+  reopenIssue: async (id: string): Promise<any> => {
+    const response = await apiClient.post(`/issues/${id}/reopen`, {});
+    return response.data;
+  },
+
+  runValidation: async (params: { record_id?: string; institution_id?: string; admission_cycle?: string }): Promise<any> => {
+    const response = await apiClient.post("/validation/run", params);
+    return response.data;
+  },
+
+  getRecordComplianceStatus: async (recordId: string): Promise<any> => {
+    const response = await apiClient.get(`/validation/record/${recordId}/status`);
     return response.data;
   },
 };

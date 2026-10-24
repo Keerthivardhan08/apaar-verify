@@ -98,11 +98,12 @@ export const useStudents = (params?: StudentFilterParams) => {
   });
 };
 
-export const useStudent = (id?: string) => {
+export const useStudent = (id?: string, options?: { refetchInterval?: number | false }) => {
   return useQuery({
     queryKey: ['student', id],
     queryFn: () => studentApi.getStudent(id!),
     enabled: Boolean(id),
+    refetchInterval: options?.refetchInterval ?? false,
   });
 };
 
@@ -209,10 +210,11 @@ export const useCommitUpload = () => {
 
 // ─── Validation Issues & Reviews ─────────────────────────────
 
-export const useIssues = (params?: IssueFilterParams) => {
+export const useIssues = (params?: IssueFilterParams, options?: { refetchInterval?: number | false }) => {
   return useQuery({
     queryKey: ['issues', params],
     queryFn: () => issueApi.getIssues(params),
+    refetchInterval: options?.refetchInterval ?? false,
   });
 };
 
@@ -227,16 +229,67 @@ export const useIssue = (id?: string) => {
 export const useResolveIssue = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) => issueApi.resolveIssue(id, reason),
+    mutationFn: ({ id, reason, action }: { id: string; reason: string; action?: string }) =>
+      issueApi.resolveIssue(id, reason, action),
     onSuccess: () => {
       toast.success('Issue marked as resolved');
       queryClient.invalidateQueries({ queryKey: ['issues'] });
       queryClient.invalidateQueries({ queryKey: ['reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['student'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['compliance-status'] });
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.detail || 'Failed to resolve issue');
     },
+  });
+};
+
+export const useReopenIssue = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => issueApi.reopenIssue(id),
+    onSuccess: () => {
+      toast.success('Issue reopened for review');
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['student'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['compliance-status'] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Failed to reopen issue');
+    },
+  });
+};
+
+export const useRunValidation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { record_id?: string; institution_id?: string; admission_cycle?: string }) =>
+      issueApi.runValidation(params),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Real-time validation engine executed successfully!');
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
+      queryClient.invalidateQueries({ queryKey: ['student'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['compliance-status'] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Validation run failed');
+    },
+  });
+};
+
+export const useRecordComplianceStatus = (recordId?: string, enabled = true, refetchInterval?: number | false) => {
+  return useQuery({
+    queryKey: ['compliance-status', recordId],
+    queryFn: () => issueApi.getRecordComplianceStatus(recordId!),
+    enabled: Boolean(recordId) && enabled,
+    refetchInterval: refetchInterval || false,
   });
 };
 

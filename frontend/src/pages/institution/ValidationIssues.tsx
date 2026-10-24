@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { useIssues, useResolveIssue } from '../../hooks/useApi';
+import { useIssues, useResolveIssue, useRunValidation } from '../../hooks/useApi';
+import { RefreshCw } from 'lucide-react';
 import { ValidationIssue } from '../../types';
 import DataTable, { Column } from '../../components/ui/DataTable';
 import FilterBar, { FilterConfig } from '../../components/ui/FilterBar';
@@ -27,16 +28,27 @@ export const ValidationIssues: React.FC = () => {
   const [selectedIssueToResolve, setSelectedIssueToResolve] = useState<ValidationIssue | null>(null);
   const [resolutionReason, setResolutionReason] = useState('');
 
-  const { data: issuesData, isLoading, isError, refetch } = useIssues({
-    institution_id: institutionId,
-    page,
-    size: 10,
-    severity: filters.severity || undefined,
-    status: filters.status || undefined,
-    rule_code: filters.rule_code || undefined,
-  });
+  const { data: issuesData, isLoading, isError, refetch } = useIssues(
+    {
+      institution_id: institutionId,
+      page,
+      size: 10,
+      severity: filters.severity || undefined,
+      status: filters.status || undefined,
+      rule_code: filters.rule_code || undefined,
+    },
+    { refetchInterval: 8000 }
+  );
 
   const resolveMutation = useResolveIssue();
+  const runValidationMutation = useRunValidation();
+
+  const handleRunBatchValidation = async () => {
+    await runValidationMutation.mutateAsync({
+      institution_id: institutionId,
+    });
+    refetch();
+  };
 
   const issues = issuesData?.items || [];
   const totalPages = issuesData?.pages || 1;
@@ -206,12 +218,30 @@ export const ValidationIssues: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Validation Issues</h1>
-        <p className="text-sm text-gray-500">
-          Review discrepancies detected by the rule engine including capacity breaches, quota
-          disparities, and identity hash flags.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Validation Issues</h1>
+          <p className="text-sm text-gray-500">
+            Review discrepancies detected by the rule engine including capacity breaches, quota
+            disparities, and identity hash flags.
+          </p>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <span className="flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
+            Real-Time Sync Active (8s)
+          </span>
+          <Button
+            variant="primary"
+            onClick={handleRunBatchValidation}
+            isLoading={runValidationMutation.isPending}
+            icon={<RefreshCw className={`w-4 h-4 ${runValidationMutation.isPending ? 'animate-spin' : ''}`} />}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            Re-run Real-Time Validation
+          </Button>
+        </div>
       </div>
 
       <FilterBar

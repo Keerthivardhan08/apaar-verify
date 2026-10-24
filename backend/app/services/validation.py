@@ -420,8 +420,26 @@ def run_all_validations(record: StudentRecord, db: Session) -> List[Dict[str, An
 def persist_issues(record: StudentRecord, issues: List[Dict[str, Any]], db: Session) -> List[ValidationIssue]:
     """
     Save validation issues to the database, avoiding duplicates.
-    Existing open issues for the same rule/record are not duplicated.
+    Auto-resolves open issues for rules that no longer trigger.
     """
+    now = datetime.now(timezone.utc)
+    current_rule_codes = {issue_data["rule_code"] for issue_data in issues}
+
+    # Automatically resolve previously open issues on this record that are now cleared
+    open_existing = (
+        db.query(ValidationIssue)
+        .filter(
+            ValidationIssue.record_id == record.id,
+            ValidationIssue.status.in_(["open", "under_review", "reopened"]),
+        )
+        .all()
+    )
+    for old_issue in open_existing:
+        if old_issue.rule_code not in current_rule_codes:
+            old_issue.status = "resolved"
+            old_issue.resolved_at = now
+            old_issue.resolution_reason = "Auto-resolved: validation condition cleared upon data update."
+
     saved = []
     for issue_data in issues:
         existing = (
@@ -448,7 +466,7 @@ def persist_issues(record: StudentRecord, issues: List[Dict[str, Any]], db: Sess
             observed_condition=issue_data.get("observed_condition"),
             evidence_reference=issue_data.get("evidence_reference"),
             status="open",
-            created_at=datetime.now(timezone.utc),
+            created_at=now,
         )
         db.add(issue)
         saved.append(issue)
@@ -457,12 +475,18 @@ def persist_issues(record: StudentRecord, issues: List[Dict[str, Any]], db: Sess
 
 
 def validate_and_persist(record: StudentRecord, db: Session) -> List[ValidationIssue]:
-    """Run all rules and persist new issues. Updates record_status if issues found."""
+    """Run all rules and persist new issues. Updates record_status in real time."""
     issues_data = run_all_validations(record, db)
     issues = persist_issues(record, issues_data, db)
 
-    high_severity = any(i["severity"] in ("high", "critical") for i in issues_data)
-    if high_severity and record.record_status not in ("rejected", "corrected"):
+    # Check remaining open high/critical issues for this student
+    has_active_high_severity = any(
+        i.severity in ("high", "critical") and i.status in ("open", "under_review", "reopened")
+        for i in issues
+    )
+    if has_active_high_severity and record.record_status not in ("rejected", "corrected"):
         record.record_status = "flagged"
+    elif not has_active_high_severity and record.record_status == "flagged":
+        record.record_status = "submitted"
 
     return issues

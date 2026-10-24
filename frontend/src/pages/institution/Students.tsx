@@ -10,7 +10,8 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
-import { UserPlus, Download, Eye, Edit3, ShieldAlert } from 'lucide-react';
+import { UserPlus, Download, Eye, Edit3, ShieldAlert, Award } from 'lucide-react';
+import DegreeCertificateModal from '../../components/certificate/DegreeCertificateModal';
 import toast from 'react-hot-toast';
 
 export const Students: React.FC = () => {
@@ -29,6 +30,8 @@ export const Students: React.FC = () => {
 
   // Modal State for Add Student
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isCertModalOpen, setIsCertModalOpen] = useState(false);
+  const [selectedCertId, setSelectedCertId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     student_name: '',
     institution_student_id: '',
@@ -269,6 +272,16 @@ export const Students: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => {
+              setSelectedCertId(row.id);
+              setIsCertModalOpen(true);
+            }}
+            icon={<Award className="w-3.5 h-3.5 text-amber-600" />}
+            title="Degree Certificate with APAAR ID (Feature 10)"
+          />
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => navigate(`/institution/students/${row.id}`)}
             icon={<Eye className="w-3.5 h-3.5" />}
             title="View Details"
@@ -472,6 +485,17 @@ export const Students: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {selectedCertId && (
+        <DegreeCertificateModal
+          isOpen={isCertModalOpen}
+          onClose={() => {
+            setIsCertModalOpen(false);
+            setSelectedCertId(null);
+          }}
+          studentId={selectedCertId}
+        />
+      )}
     </div>
   );
 };

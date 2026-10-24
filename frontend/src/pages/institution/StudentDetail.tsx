@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ocrApi, DocumentReconciliationResult, verificationApi } from '../../services/api';
+import DegreeCertificateModal from '../../components/certificate/DegreeCertificateModal';
 
 export const StudentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -67,6 +68,7 @@ export const StudentDetail: React.FC = () => {
 
   // Correction request modal
   const [isCorrectionModalOpen, setIsCorrectionModalOpen] = useState(false);
+  const [isCertModalOpen, setIsCertModalOpen] = useState(false);
   const [correctionField, setCorrectionField] = useState('student_name');
   const [proposedValue, setProposedValue] = useState('');
   const [justification, setJustification] = useState('');
@@ -316,6 +318,14 @@ export const StudentDetail: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
+          <Button
+            variant="secondary"
+            onClick={() => setIsCertModalOpen(true)}
+            icon={<Award className="w-4 h-4 text-amber-500" />}
+            className="border-amber-200 bg-amber-50/60 hover:bg-amber-100 text-amber-900 shadow-2xs font-medium"
+          >
+            Degree Certificate (Feature 10)
+          </Button>
           <Button
             variant="primary"
             onClick={() => {
@@ -1217,6 +1227,14 @@ export const StudentDetail: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {student && (
+        <DegreeCertificateModal
+          isOpen={isCertModalOpen}
+          onClose={() => setIsCertModalOpen(false)}
+          studentId={student.id}
+        />
+      )}
     </div>
   );
 };

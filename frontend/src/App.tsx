@@ -133,6 +133,7 @@ export const App: React.FC = () => {
           <Route path="graph" element={<IntegrityGraph />} />
           <Route path="integrations" element={<Integrations />} />
           <Route path="freshness" element={<FreshnessMonitor />} />
+          <Route path="reports" element={<Reports />} />
         </Route>
       </Route>
 

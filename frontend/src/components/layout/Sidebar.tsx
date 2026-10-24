@@ -50,6 +50,7 @@ export const Sidebar: React.FC = () => {
     { label: 'Freshness & SLA', to: '/aicte/freshness', icon: Clock },
     { label: 'Review Queue', to: '/aicte/reviews', icon: CheckSquare },
     { label: 'Audit Explorer', to: '/aicte/audit', icon: FileSearch },
+    { label: 'Statutory Reports', to: '/aicte/reports', icon: FileSpreadsheet },
     { label: 'Analytics', to: '/aicte/analytics', icon: LineChart },
     { label: 'Public Verifier', to: '/verify', icon: QrCode },
   ];

@@ -38,7 +38,7 @@ REQUIRED_FIELDS = [
 
 # Demo format: DEMO-XXXX (4-20 alphanumeric) or 12-digit number
 # This is a FICTIONAL format — not the official APAAR format
-DEMO_IDENTIFIER_PATTERN = re.compile(r"^DEMO-[A-Z0-9]{4,20}$|^[0-9]{12}$")
+DEMO_IDENTIFIER_PATTERN = re.compile(r"^DEMO-[A-Z0-9_-]{4,25}$|^[0-9]{12}$")
 
 VALID_ADMISSION_CATEGORIES = {
     "general", "obc", "sc", "st", "ews", "nri", "oci",

@@ -29,7 +29,7 @@ export const Upload: React.FC = () => {
   const institutionId = getUserInstitutionId() || 'INST-001';
 
   const [activeTab, setActiveTab] = useState<'batch' | 'manual'>('batch');
-  const [cycle, setCycle] = useState('2024-2025');
+  const [cycle, setCycle] = useState('2026-27');
   const [file, setFile] = useState<File | null>(null);
   const [previewRows, setPreviewRows] = useState<string[][]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -258,9 +258,9 @@ export const Upload: React.FC = () => {
                 onChange={(e) => setCycle(e.target.value)}
                 className="text-sm px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:outline-none bg-white font-medium"
               >
+                <option value="2026-27">Academic Cycle 2026-27 (Current Active)</option>
+                <option value="2025-2026">Academic Cycle 2025-2026</option>
                 <option value="2024-2025">Academic Cycle 2024-2025</option>
-                <option value="2023-2024">Academic Cycle 2023-2024</option>
-                <option value="2022-2023">Academic Cycle 2022-2023</option>
               </select>
             </div>
 

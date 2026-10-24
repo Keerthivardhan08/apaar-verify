@@ -1,0 +1,5 @@
+institution_student_id,student_name,date_of_birth,gender,identity_reference,admission_category,nri_category,oci_status,foreign_national_status,supernumerary_category,admission_status,program_code
+IIT-EE-301,Invalid APAAR Student,2005-01-01,Male,INVALID-XYZ-12,general,not_applicable,not_applicable,not_applicable,none,admitted,EE-UG-2026
+IIT-EE-302,Conflicting Quota Student,2005-02-02,Female,DEMO-APAAR-7010,general,applicable,applicable,applicable,none,admitted,EE-UG-2026
+IIT-EE-303,Duplicate Student In Batch,2005-03-03,Male,DEMO-APAAR-7011,obc,not_applicable,not_applicable,not_applicable,none,admitted,EE-UG-2026
+IIT-EE-303,Duplicate Student In Batch,2005-03-03,Male,DEMO-APAAR-7011,obc,not_applicable,not_applicable,not_applicable,none,admitted,EE-UG-2026

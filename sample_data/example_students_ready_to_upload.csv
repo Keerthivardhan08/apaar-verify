@@ -1,0 +1,6 @@
+institution_student_id,student_name,date_of_birth,gender,identity_reference,admission_category,nri_category,oci_status,foreign_national_status,supernumerary_category,admission_status,program_code
+IIT-EE-201,Kavya Venkatesh,2005-03-22,Female,DEMO-APAAR-7001,general,not_applicable,not_applicable,not_applicable,none,admitted,EE-UG-2026
+IIT-EE-202,Arjun Nair,2005-08-14,Male,DEMO-APAAR-7002,obc,not_applicable,not_applicable,not_applicable,none,admitted,EE-UG-2026
+IIT-EE-203,Siddharth Rao,2004-11-09,Male,DEMO-APAAR-7003,nri,applicable,not_applicable,not_applicable,nri,admitted,EE-UG-2026
+IIT-ME-204,Ananya Sen,2005-06-30,Female,DEMO-APAAR-7004,ews,not_applicable,not_applicable,not_applicable,none,admitted,ME-UG-2026
+IIT-ME-205,Jean-Luc Pierre,2004-09-18,Male,DEMO-APAAR-7005,foreign_national,not_applicable,not_applicable,applicable,foreign_national,admitted,ME-UG-2026

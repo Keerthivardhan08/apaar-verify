@@ -470,6 +470,10 @@ export const dashboardApi = {
 // ============================================================
 
 export const verificationApi = {
+  verifyByIdentifier: async (params: { identifier: string; purpose?: string; stakeholder_type?: string }): Promise<any> => {
+    const response = await apiClient.post('/verification/verify-identifier', params);
+    return response.data;
+  },
   requestVerification: async (
     recordId: string,
     purpose: string,

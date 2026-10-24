@@ -71,10 +71,10 @@ export const ApaarQuickDesk: React.FC = () => {
 
   // Quick pick chips for demonstration
   const demoChips = [
-    { label: 'IIT Student #1', id: 'DEMO-APAAR-0001' },
-    { label: 'IIT Student #2', id: 'DEMO-APAAR-0002' },
-    { label: 'IIT Student #3', id: 'DEMO-APAAR-0003' },
-    { label: '12-Digit Numeric', id: '123456789012' },
+    { label: 'IIT Student #1', id: 'DEMO-APAAR-1001' },
+    { label: 'IIT Student #2', id: 'DEMO-APAAR-1002' },
+    { label: 'IIT Student #3', id: 'DEMO-APAAR-1003' },
+    { label: '12-Digit Numeric', id: 'DEMO-APAAR-1004' },
   ];
 
   const handleFetchRecord = async (searchId?: string) => {
@@ -244,7 +244,7 @@ export const ApaarQuickDesk: React.FC = () => {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Enter APAAR ID (e.g. DEMO-APAAR-0001 or 123456789012)..."
+                placeholder="Enter APAAR ID (e.g. DEMO-APAAR-1001 or DEMO-APAAR-1004)..."
                 value={apaarInput}
                 onChange={(e) => setApaarInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -311,10 +311,10 @@ export const ApaarQuickDesk: React.FC = () => {
           </p>
           <div className="pt-2">
             <button
-              onClick={() => handleFetchRecord('DEMO-APAAR-0001')}
+              onClick={() => handleFetchRecord('DEMO-APAAR-1001')}
               className="text-xs font-semibold text-indigo-700 hover:text-indigo-800 underline"
             >
-              Click here to auto-fetch DEMO-APAAR-0001 & unlock the update form
+              Click here to auto-fetch DEMO-APAAR-1001 & unlock the update form
             </button>
           </div>
         </Card>

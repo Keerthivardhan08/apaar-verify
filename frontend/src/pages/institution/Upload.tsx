@@ -85,33 +85,35 @@ export const Upload: React.FC = () => {
 
   const handleDownloadTemplate = () => {
     const templateHeaders = [
-      'institution_student_id',
       'student_name',
+      'institution_student_id',
+      'identity_reference',
       'date_of_birth',
       'gender',
       'program_code',
+      'admission_cycle',
       'admission_category',
       'admission_status',
-      'aadhaar_hash',
-      'email',
-      'phone',
       'nri_category',
+      'oci_status',
+      'foreign_national_status',
       'supernumerary_category',
     ];
 
     const sampleRow = [
-      '2024CS001',
-      'Arun Sharma',
-      '2004-05-15',
-      'MALE',
-      'CSE-UG-BTECH',
-      'GENERAL',
-      'CONFIRMED',
-      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-      'arun.sharma@example.com',
-      '9876543210',
-      'NONE',
-      'NONE',
+      'Aarav Sharma',
+      'IIT-CS-001',
+      'DEMO-APAAR-1001',
+      '2005-05-15',
+      'male',
+      'CS-UG-2026',
+      cycle || '2026-27',
+      'general',
+      'admitted',
+      'not_applicable',
+      'not_applicable',
+      'not_applicable',
+      'none',
     ];
 
     const csvString = [templateHeaders.join(','), sampleRow.join(',')].join('\n');

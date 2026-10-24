@@ -479,10 +479,37 @@ export const StudentDetail: React.FC = () => {
 
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase">
-                NRI / Supernumerary Status
+                NRI Category
               </label>
-              <p className="mt-1 text-sm text-gray-900">
-                {student.nri_category !== 'NONE' ? student.nri_category : 'Standard Intake'}
+              <p className="mt-1 text-sm font-semibold text-gray-900 capitalize">
+                {student.nri_category || 'not_applicable'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase">
+                OCI Status
+              </label>
+              <p className="mt-1 text-sm font-semibold text-gray-900 capitalize">
+                {student.oci_status || 'not_applicable'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase">
+                Foreign National (FN) Status
+              </label>
+              <p className="mt-1 text-sm font-semibold text-gray-900 capitalize">
+                {student.foreign_national_status || 'not_applicable'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase">
+                Supernumerary Seats Quota
+              </label>
+              <p className="mt-1 text-sm font-semibold text-gray-900 capitalize">
+                {student.supernumerary_category || 'none'}
               </p>
             </div>
 

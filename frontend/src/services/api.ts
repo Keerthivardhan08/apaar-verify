@@ -946,5 +946,11 @@ export const ocrApi = {
   },
 };
 
-
-
+export const graphApi = {
+  getGraphData: async (cycle: string = '2026-27'): Promise<any> => {
+    const response = await apiClient.get('/graph/data', {
+      params: { admission_cycle: cycle },
+    });
+    return response.data;
+  },
+};

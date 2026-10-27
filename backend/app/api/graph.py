@@ -21,19 +21,23 @@ router = APIRouter()
 @router.get("/graph/data")
 def get_integrity_graph_data(
     admission_cycle: Optional[str] = Query("2026-27"),
-    current_user: User = Depends(require_roles("aicte_admin", "reviewer")),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
     Construct node-link graph of participating technical institutions,
     active programs, enrolled students, validation issues, and cross-match anomalies.
+    Accessible to all authenticated platform officers and reviewers.
     """
     institutions = db.query(Institution).filter(Institution.status == "active").all()
     programs = db.query(Program).filter(Program.status == "active").all()
     
     student_q = db.query(StudentRecord)
-    if admission_cycle:
-        student_q = student_q.filter(StudentRecord.admission_cycle == admission_cycle)
+    if admission_cycle and admission_cycle != "all":
+        # Check if records exist for requested cycle, else load all records
+        cycle_count = db.query(StudentRecord).filter(StudentRecord.admission_cycle == admission_cycle).count()
+        if cycle_count > 0:
+            student_q = student_q.filter(StudentRecord.admission_cycle == admission_cycle)
     students = student_q.all()
 
     issues = db.query(ValidationIssue).filter(ValidationIssue.status.in_(["open", "under_review", "reopened"])).all()
@@ -77,7 +81,7 @@ def get_integrity_graph_data(
     for stu in students:
         # Mask student reference
         ref = stu.identity_reference or ""
-        masked_ref = f"{ref[:4]}...{ref[-4:]}" if len(ref) > 8 else "****"
+        masked_ref = f"{ref[:4]}...{ref[-4:]}" if len(ref) > 8 else (ref if ref else "****")
 
         # Check issues for this student
         student_issues = [i for i in issues if i.record_id == stu.id]

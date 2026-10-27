@@ -28,24 +28,28 @@ export const StatCard: React.FC<StatCardProps> = ({
 }) => {
   const variantStyles = {
     default: {
-      card: 'border-gray-200 hover:border-gray-300',
-      iconBg: 'bg-indigo-50 text-indigo-700',
-      value: 'text-gray-900',
+      card: 'liquid-glass border-white/70 hover:border-indigo-300 hover:shadow-indigo-500/10',
+      iconBg: 'bg-indigo-50/80 text-indigo-700 border border-indigo-200/50 shadow-inner',
+      value: 'text-slate-900',
+      glow: 'from-indigo-500/5 to-purple-500/5',
     },
     success: {
-      card: 'border-emerald-200 bg-emerald-50/20 hover:border-emerald-300',
-      iconBg: 'bg-emerald-100 text-emerald-700',
+      card: 'liquid-glass border-emerald-200/60 hover:border-emerald-300 hover:shadow-emerald-500/10',
+      iconBg: 'bg-emerald-50/80 text-emerald-700 border border-emerald-200/50 shadow-inner',
       value: 'text-emerald-950',
+      glow: 'from-emerald-500/10 to-teal-500/5',
     },
     warning: {
-      card: 'border-amber-200 bg-amber-50/20 hover:border-amber-300',
-      iconBg: 'bg-amber-100 text-amber-700',
+      card: 'liquid-glass border-amber-200/60 hover:border-amber-300 hover:shadow-amber-500/10',
+      iconBg: 'bg-amber-50/80 text-amber-700 border border-amber-200/50 shadow-inner',
       value: 'text-amber-950',
+      glow: 'from-amber-500/10 to-orange-500/5',
     },
     danger: {
-      card: 'border-rose-200 bg-rose-50/20 hover:border-rose-300',
-      iconBg: 'bg-rose-100 text-rose-700',
+      card: 'liquid-glass border-rose-200/60 hover:border-rose-300 hover:shadow-rose-500/10',
+      iconBg: 'bg-rose-50/80 text-rose-700 border border-rose-200/50 shadow-inner',
       value: 'text-rose-950',
+      glow: 'from-rose-500/10 to-red-500/5',
     },
   };
 
@@ -54,31 +58,38 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-xl border p-5 shadow-sm transition-all duration-200 ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : ''
+      className={`relative overflow-hidden rounded-2xl border p-5 shadow-xs transition-all duration-300 liquid-card-glow ${
+        onClick ? 'cursor-pointer' : ''
       } ${style.card} ${className}`}
     >
-      <div className="flex items-start justify-between">
+      {/* Background Liquid Subtle Tint */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${style.glow} pointer-events-none opacity-80`} />
+
+      <div className="relative z-10 flex items-start justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{title}</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{title}</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className={`text-2xl font-bold tracking-tight ${style.value}`}>{value}</span>
+            <span className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${style.value}`}>{value}</span>
           </div>
         </div>
-        {icon && <div className={`p-2.5 rounded-lg shrink-0 ${style.iconBg}`}>{icon}</div>}
+        {icon && (
+          <div className={`p-2.5 rounded-xl shrink-0 backdrop-blur-md ${style.iconBg}`}>
+            {icon}
+          </div>
+        )}
       </div>
 
       {(subtitle || trend) && (
-        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-          {subtitle && <span>{subtitle}</span>}
+        <div className="relative z-10 mt-3 pt-3 border-t border-slate-200/40 flex items-center justify-between text-xs text-slate-500">
+          {subtitle && <span className="truncate pr-2">{subtitle}</span>}
           {trend && (
             <span
-              className={`inline-flex items-center font-medium ${
+              className={`inline-flex items-center font-semibold shrink-0 ${
                 trend.isPositive === true
                   ? 'text-emerald-600'
                   : trend.isPositive === false
                   ? 'text-rose-600'
-                  : 'text-gray-500'
+                  : 'text-slate-500'
               }`}
             >
               {trend.isPositive === true ? (
@@ -88,7 +99,7 @@ export const StatCard: React.FC<StatCardProps> = ({
               ) : (
                 <Minus className="w-3.5 h-3.5 mr-0.5" />
               )}
-              {trend.value} {trend.label && <span className="text-gray-400 ml-1">{trend.label}</span>}
+              {trend.value} {trend.label && <span className="text-slate-400 ml-1 font-normal">{trend.label}</span>}
             </span>
           )}
         </div>

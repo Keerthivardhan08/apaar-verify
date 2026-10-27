@@ -11,6 +11,8 @@
 > **⚠️ DEMONSTRATION & PROTOTYPE NOTICE**  
 > APAAR Verify is an architectural and engineering prototype designed for the Smart India Hackathon. All student records, institutional figures, and verification responses shown are synthetic. Identity queries are simulated and do **NOT** constitute an official Ministry of Education or AICTE determination.
 
+> 📘 **Beginner & Evaluator Guide:** For an exhaustive, beginner-friendly explanation of the entire project (tech stack, system architecture, database design, 60+ APIs, security PKI, and all 10 features), read the [Complete Beginner & Evaluator Report](APAAR_Verify_Complete_Beginner_Report.md).
+
 ---
 
 ## 🚀 1-Click Permanent Cloud Deployment (Zero Tunneling)

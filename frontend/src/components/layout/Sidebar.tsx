@@ -58,17 +58,17 @@ export const Sidebar: React.FC = () => {
   const navItems = isAICTEAdmin() ? aicteNavItems : institutionNavItems;
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 min-h-screen flex flex-col shrink-0 border-r border-slate-800">
-      {/* Brand logo & title */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-800 gap-3">
-        <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md">
+    <aside className="w-64 liquid-glass-dark text-slate-300 min-h-screen flex flex-col shrink-0 border-r border-slate-800/80 z-20 backdrop-blur-2xl">
+      {/* Brand logo & title with subtle glowing accent */}
+      <div className="h-16 flex items-center px-6 border-b border-slate-800/60 gap-3">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 border border-indigo-400/40">
           <GraduationCap className="w-5 h-5" />
         </div>
         <div>
-          <span className="font-bold text-white text-base tracking-tight block leading-tight">
+          <span className="font-extrabold text-white text-base tracking-tight block leading-tight">
             APAAR Verify
           </span>
-          <span className="text-[10px] text-slate-400 font-medium tracking-wide uppercase">
+          <span className="text-[10px] text-indigo-300/80 font-bold tracking-wider uppercase">
             {isAICTEAdmin() ? 'Central AICTE Portal' : 'Institution Node'}
           </span>
         </div>
@@ -76,7 +76,7 @@ export const Sidebar: React.FC = () => {
 
       {/* Nav Menu */}
       <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
-        <div className="px-3 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+        <div className="px-3 pb-2 text-[10px] font-bold text-slate-400/80 uppercase tracking-widest">
           {isAICTEAdmin() ? 'Regulatory Operations' : 'Academic Workspace'}
         </div>
 
@@ -88,28 +88,31 @@ export const Sidebar: React.FC = () => {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                `group flex items-center px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/30 border border-indigo-400/30'
+                    : 'text-slate-300 hover:bg-slate-800/60 hover:text-white hover:translate-x-0.5'
                 }`
               }
             >
-              <Icon className="w-4 h-4 mr-3 shrink-0" />
-              <span>{item.label}</span>
+              <Icon className="w-4 h-4 mr-3 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+              <span className="truncate">{item.label}</span>
             </NavLink>
           );
         })}
       </div>
 
-      {/* Footer Info */}
-      <div className="p-4 border-t border-slate-800 text-[11px] text-slate-400">
+      {/* Footer System Status Badge */}
+      <div className="p-4 border-t border-slate-800/60 text-[11px] text-slate-400 bg-slate-950/40">
         <div className="flex items-center justify-between mb-1">
-          <span>APAAR Integrity Node</span>
-          <span className="text-emerald-400 font-mono">v0.1.0</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-medium text-slate-300">Integrity Node</span>
+          </div>
+          <span className="text-emerald-400 font-mono text-[10px] bg-emerald-950/60 border border-emerald-800/60 px-1.5 py-0.5 rounded">v0.1.0</span>
         </div>
-        <p className="text-slate-400 leading-tight">
-          Ministry of Education / AICTE Academic Data Compliance
+        <p className="text-slate-400/80 text-[10px] leading-tight mt-1">
+          MoE / AICTE Academic Data Compliance
         </p>
       </div>
     </aside>

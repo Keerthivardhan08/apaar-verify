@@ -29,8 +29,75 @@ export interface Institution {
   contact_email?: string;
   contact_phone?: string;
   total_programs?: number;
+  total_approved_intake?: number;
+  total_enrolled?: number;
+  naac_grade?: string;
+  nba_status?: string;
+  pending_complaints?: number;
+  new_intake_status?: string;
   total_records?: number;
   flagged_records?: number;
+}
+
+export interface InstitutionPortfolioProgram {
+  program_id: string;
+  program_code: string;
+  program_name: string;
+  branch: string;
+  approved_capacity: number;
+  enrolled_count: number;
+  utilization_pct: number;
+  vacant_seats: number;
+  status: 'OPTIMAL' | 'BREACHED' | 'AVAILABLE';
+  category_breakdown: Record<string, number>;
+}
+
+export interface InstitutionPortfolio {
+  institution_id: string;
+  institution_name: string;
+  institution_code: string;
+  institution_type: string;
+  city: string;
+  state: string;
+  status: string;
+
+  // NBA Accreditation
+  nba_tier: string;
+  nba_status: string;
+  nba_accredited_branches: string;
+  nba_valid_until: string;
+  nba_file_ref: string;
+
+  // NAAC Accreditation
+  naac_grade: string;
+  naac_cgpa: string;
+  naac_cycle: string;
+  naac_valid_until: string;
+
+  // Complaints & Grievance Governance
+  complaints_total: number;
+  complaints_resolved: number;
+  complaints_pending: number;
+  complaints_summary: string;
+  complaints_resolution_rate: number;
+
+  // Intake & Approvals
+  eoa_reference: string;
+  total_approved_intake: number;
+  total_enrolled: number;
+  utilization_pct: number;
+  vacant_seats: number;
+  new_intake_applied: number;
+  new_intake_branch: string;
+  new_intake_status: string;
+  new_intake_remarks: string;
+
+  // Division of seats among categories
+  category_quotas: Record<string, number>;
+  category_distribution: Record<string, number>;
+
+  // Branch analytical comparison
+  programs: InstitutionPortfolioProgram[];
 }
 
 export interface InstitutionStats {

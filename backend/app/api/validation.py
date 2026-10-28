@@ -320,3 +320,19 @@ def trigger_validation(
         "issues_found": total_issues,
         "synced_at": datetime.now(timezone.utc).isoformat(),
     }
+
+
+@router.get("/validation/nine-rules", summary="List All 9 Rules with Severity Tagging & Assigned Departments")
+def get_nine_rules_with_department_assignment(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns the 9 core deterministic validation rules of the APAAR Integrity Engine,
+    annotated with their regulatory Severity Tag (critical, high, medium, low),
+    and their Automatic Regulatory Assigned Department in case of any conflicts (e.g. intake problems).
+    """
+    from app.services.trend_analytics import get_model_performance_evaluation
+    perf = get_model_performance_evaluation(db)
+    return perf.get("rule_performance", [])
+

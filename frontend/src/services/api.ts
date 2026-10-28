@@ -8,6 +8,7 @@ import {
   User,
   Institution,
   InstitutionStats,
+  InstitutionPortfolio,
   Program,
   IntakeLimit,
   StudentRecord,
@@ -164,6 +165,11 @@ export const institutionApi = {
     const response = await apiClient.get<any>(`/institutions/${id}/compliance-dashboard`, { params });
     return response.data;
   },
+
+  getInstitutionPortfolio: async (id: string): Promise<InstitutionPortfolio> => {
+    const response = await apiClient.get<InstitutionPortfolio>('/institutions/' + id + '/portfolio');
+    return response.data;
+  },
 };
 
 // ============================================================
@@ -224,6 +230,35 @@ export const studentApi = {
 
   getStudent: async (id: string): Promise<StudentRecord> => {
     const response = await apiClient.get<StudentRecord>(`/students/${id}`);
+    return response.data;
+  },
+
+  searchInspector: async (query: string): Promise<any[]> => {
+    const response = await apiClient.get<any[]>('/students/search-inspector', { params: { query } });
+    return response.data;
+  },
+
+    getAcademicDossier: async (apaarId: string): Promise<any> => {
+    const response = await apiClient.get<any>('/students/academic-dossier', { params: { apaar_id: apaarId } });
+    return response.data;
+  },
+
+  getCorrectionRequests: async (params?: { student_id?: string; apaar_id?: string }): Promise<any[]> => {
+    const response = await apiClient.get<any[]>('/students/correction-requests', { params });
+    return response.data;
+  },
+
+  institutionEndorseCorrection: async (workflowId: string, notes: string = ''): Promise<any> => {
+    const response = await apiClient.post<any>('/students/correction-requests/' + workflowId + '/institution-endorse', { notes });
+    return response.data;
+  },
+
+  aicteApproveCorrection: async (workflowId: string, notes: string = ''): Promise<any> => {
+    const response = await apiClient.post<any>('/students/correction-requests/' + workflowId + '/aicte-approve', { notes });
+    return response.data;
+  },
+  raiseCorrection: async (data: { student_id: string; field_to_update: string; new_value: string; reason: string }): Promise<any> => {
+    const response = await apiClient.post<any>('/students/raise-correction', data);
     return response.data;
   },
 
@@ -386,6 +421,10 @@ export const issueApi = {
     return response.data;
   },
 
+    getNineRules: async (): Promise<any[]> => {
+    const response = await apiClient.get<any[]>('/validation/nine-rules');
+    return response.data;
+  },
   resolveIssue: async (id: string, resolution_reason: string, action: string = "resolved"): Promise<ValidationIssue> => {
     const response = await apiClient.post<ValidationIssue>(`/issues/${id}/resolve`, { resolution_reason, action });
     return response.data;
@@ -438,6 +477,11 @@ export const reviewApi = {
     const response = await apiClient.post<ValidationIssue>(`/reviews/${issueId}/assign`, {
       assigned_to: userId,
     });
+    return response.data;
+  },
+
+  getCaseTimelines: async (params?: { status_filter?: string; severity_filter?: string }): Promise<any[]> => {
+    const response = await apiClient.get<any[]>('/reviews/case-timeline', { params });
     return response.data;
   },
 
@@ -668,6 +712,49 @@ export const consentApi = {
 
   revokeConsent: async (consentId: string): Promise<{ message: string; consent_id: string }> => {
     const response = await apiClient.delete<{ message: string; consent_id: string }>(`/consent/${consentId}`);
+    return response.data;
+  },
+
+  getStakeholders: async (): Promise<any[]> => {
+    const response = await apiClient.get<any[]>('/consent/stakeholders');
+    return response.data;
+  },
+
+  toggleStakeholderApproval: async (id: string): Promise<any> => {
+    const response = await apiClient.post<any>(`/consent/stakeholders/${id}/toggle-approval`);
+    return response.data;
+  },
+
+  getStudentRequests: async (apaarId: string): Promise<any> => {
+    const response = await apiClient.get<any>('/consent/student-requests', { params: { apaar_id: apaarId } });
+    return response.data;
+  },
+
+  decideStudentConsent: async (data: { apaar_id: string; stakeholder_id: string; decision: string }): Promise<any> => {
+    const response = await apiClient.post<any>('/consent/student-requests/decide', data);
+    return response.data;
+  },
+
+    submitStakeholderReview: async (data: {
+    apaar_id: string;
+    stakeholder_id: string;
+    stakeholder_name: string;
+    reviewer_name: string;
+    verdict: string;
+    review_notes: string;
+  }): Promise<any> => {
+    const response = await apiClient.post<any>('/consent/stakeholder-review', data);
+    return response.data;
+  },
+
+  getStakeholderReviews: async (apaarId: string): Promise<any[]> => {
+    const response = await apiClient.get<any[]>('/consent/stakeholder-reviews', { params: { apaar_id: apaarId } });
+    return response.data;
+  },
+  stakeholderQuery: async (apaarId: string, stakeholderId: string): Promise<any> => {
+    const response = await apiClient.get<any>('/consent/stakeholder-query', {
+      params: { apaar_id: apaarId, stakeholder_id: stakeholderId },
+    });
     return response.data;
   },
 };

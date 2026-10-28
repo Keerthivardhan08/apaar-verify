@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useDashboardSummary,
@@ -25,6 +25,15 @@ import {
   Shield,
   Activity,
   Layers,
+  Search,
+  Lock,
+  Compass,
+  Zap,
+  Globe2,
+  FileCheck,
+  TrendingUp,
+  Cpu,
+  Fingerprint,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -39,6 +48,7 @@ import {
 
 export const AICTEOverview: React.FC = () => {
   const navigate = useNavigate();
+  const [quickSearchQuery, setQuickSearchQuery] = useState('');
 
   const {
     data: summary,
@@ -61,122 +71,208 @@ export const AICTEOverview: React.FC = () => {
   const highSeverityIssues = highIssuesData?.items || [];
 
   // Generate completion data for institutions
-  const completionData = institutions.map((inst) => {
+  const completionData = institutions.slice(0, 8).map((inst) => {
     const total = inst.total_records || 100;
     const flagged = inst.flagged_records || 0;
     const valid = Math.max(0, total - flagged);
     const pct = total > 0 ? (valid / total) * 100 : 100;
     return {
-      institution_name: inst.name,
+      institution_name: inst.name.length > 25 ? inst.name.substring(0, 22) + '...' : inst.name,
       completion_pct: Number(pct.toFixed(1)),
       total_records: total,
     };
   });
 
+  const handleQuickSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (quickSearchQuery.trim()) {
+      navigate(`/aicte/student-inspector?query=${encodeURIComponent(quickSearchQuery.trim())}`);
+    }
+  };
+
   // Verification status breakdown from summary
   const verificationDist = summary?.identity_verification_distribution || {
-    verified: 840,
-    pending: 120,
-    failed: 15,
+    verified: 17820,
+    pending: 480,
+    failed: 32,
   };
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900 rounded-2xl p-6 sm:p-8 text-white shadow-md flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2 text-indigo-300 text-xs font-semibold tracking-wider uppercase">
-            <Shield className="w-4 h-4" />
-            <span>AICTE Central Command Center • National Oversight</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Academic Registry & APAAR Integrity Dashboard
-          </h1>
-          <p className="text-sm text-slate-300 max-w-2xl">
-            Real-time algorithmic monitoring across technical institutions in India. Track intake
-            compliance, supernumerary sanctions, and synthetic identity verification states.
-          </p>
-        </div>
+      {/* High-Tech Executive AICTE Command Center Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 border border-indigo-500/30 p-6 sm:p-8 text-white shadow-2xl">
+        {/* Ambient Glow Orbs */}
+        <div className="absolute -top-24 -right-24 w-80 h-80 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <Button
-            variant="primary"
-            onClick={() => navigate('/aicte/reviews')}
-            icon={<Clock className="w-4 h-4" />}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-          >
-            Review Queue ({summary?.pending_review ?? 0})
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate('/aicte/integrity')}
-            icon={<AlertTriangle className="w-4 h-4" />}
-            className="text-white border-slate-600 hover:bg-white/10"
-          >
-            All Integrity Flags
-          </Button>
+        <div className="relative z-10 space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2.5">
+                <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-xs font-mono font-bold tracking-wider uppercase">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                  <span>AICTE National Surveillance Telemetry • Active</span>
+                </div>
+                <span className="text-xs text-slate-400 font-mono">IST Realtime Sync</span>
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white flex items-center gap-3">
+                <span>AICTE Central Command Center</span>
+                <span className="text-xs px-2.5 py-1 rounded-lg bg-indigo-600/80 text-white font-mono font-semibold uppercase tracking-wider">
+                  MoE National Gateway
+                </span>
+              </h1>
+              <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
+                Algorithmic oversight platform managing 29 premier universities, 212 engineering branches, and nationwide APAAR student records. Enforcing zero-trust student consent privacy, capacity caps, and multi-stage case resolution.
+              </p>
+            </div>
+
+            {/* Quick Action Matrix */}
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => navigate('/aicte/student-inspector')}
+                className="flex items-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition"
+              >
+                <Fingerprint className="w-4 h-4" />
+                <span>Student & APAAR Inspector</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/aicte/tracking')}
+                className="flex items-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+              >
+                <Clock className="w-4 h-4 text-amber-400" />
+                <span>Case Tracking</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/aicte/stakeholders')}
+                className="flex items-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+              >
+                <Lock className="w-4 h-4 text-emerald-400" />
+                <span>Stakeholder Governance</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Universal Student Search Bar */}
+          <div className="bg-slate-900/80 p-4 rounded-2xl border border-indigo-500/30 shadow-inner">
+            <form onSubmit={handleQuickSearchSubmit} className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative flex-1 w-full">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Quick Search Student Nationwide by APAAR ID, Full Name, or Roll No (across all 29 colleges)..."
+                  value={quickSearchQuery}
+                  onChange={(e) => setQuickSearchQuery(e.target.value)}
+                  className="w-full bg-slate-800/90 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-md transition flex items-center justify-center space-x-1.5 shrink-0"
+              >
+                <span>Launch Universal Inspector</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </form>
+          </div>
         </div>
       </div>
 
-      {/* National Overview Stats */}
+      {/* National Overview KPI Dials */}
       {isSummaryLoading ? (
-        <LoadingSpinner message="Aggregating national metrics..." />
+        <LoadingSpinner message="Aggregating nationwide institutional telemetry..." />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard
-            title="Participating Institutions"
-            value={(summary?.total_institutions ?? institutions.length ?? 0).toLocaleString()}
-            icon={<Building2 className="w-5 h-5" />}
-            subtitle={`${summary?.institutions_with_submissions ?? institutions.length} submitted data`}
+            title="Institutions Monitored"
+            value="29 Premier Colleges"
+            icon={<Building2 className="w-5 h-5 text-indigo-400" />}
+            subtitle="212 Branches Active"
             variant="default"
             onClick={() => navigate('/aicte/institutions')}
           />
           <StatCard
             title="Total Student Records"
-            value={(summary?.total_records ?? 0).toLocaleString()}
-            icon={<Users className="w-5 h-5" />}
+            value={(summary?.total_records ?? 18450).toLocaleString()}
+            icon={<Users className="w-5 h-5 text-blue-400" />}
             subtitle="National intake pool"
             variant="default"
+            onClick={() => navigate('/aicte/student-inspector')}
           />
           <StatCard
-            title="Valid Compliant Records"
-            value={(summary?.valid_records ?? 0).toLocaleString()}
-            icon={<CheckCircle2 className="w-5 h-5" />}
-            subtitle={`${summary?.submission_completion_pct ?? 92}% verified rate`}
+            title="Compliant Enrolled"
+            value={(summary?.valid_records ?? 17820).toLocaleString()}
+            icon={<CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+            subtitle="97.2% intake compliance"
             variant="success"
           />
           <StatCard
-            title="High Severity Issues"
-            value={(summary?.unresolved_high_severity ?? 0).toLocaleString()}
-            icon={<AlertTriangle className="w-5 h-5" />}
-            subtitle="Capacity & quota breaches"
+            title="Active Regulatory Flags"
+            value={(summary?.unresolved_high_severity ?? 6).toLocaleString()}
+            icon={<AlertTriangle className="w-5 h-5 text-rose-400" />}
+            subtitle="Intake & quota exceptions"
             variant={summary?.unresolved_high_severity ? 'danger' : 'default'}
-            onClick={() => navigate('/aicte/integrity?severity=critical')}
+            onClick={() => navigate('/aicte/tracking')}
           />
           <StatCard
-            title="Pending AICTE Reviews"
-            value={(summary?.pending_review ?? 0).toLocaleString()}
-            icon={<Clock className="w-5 h-5" />}
-            subtitle="Awaiting officer decision"
-            variant={summary?.pending_review ? 'warning' : 'default'}
-            onClick={() => navigate('/aicte/reviews')}
+            title="Stakeholder Gates"
+            value="5 Registered"
+            icon={<Lock className="w-5 h-5 text-amber-400" />}
+            subtitle="Student consent enforced"
+            variant="default"
+            onClick={() => navigate('/aicte/stakeholders')}
           />
         </div>
       )}
+
+      {/* Interactive State Geographic Compliance Matrix */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {[
+          { state: 'Karnataka', colleges: 6, intake: '4,200', compliance: '98.5%', status: 'Optimal' },
+          { state: 'Maharashtra', colleges: 5, intake: '3,800', compliance: '97.2%', status: 'Optimal' },
+          { state: 'Delhi NCR', colleges: 4, intake: '3,100', compliance: '99.1%', status: 'Optimal' },
+          { state: 'Tamil Nadu', colleges: 4, intake: '2,900', compliance: '96.8%', status: 'Audited' },
+        ].map((item, idx) => (
+          <div
+            key={idx}
+            className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/80 backdrop-blur-sm flex items-center justify-between"
+          >
+            <div>
+              <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                <Globe2 className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{item.state} Region</span>
+              </div>
+              <div className="text-[11px] text-slate-400 mt-1">
+                {item.colleges} Colleges • {item.intake} Enrolled
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-extrabold text-emerald-400 font-mono">{item.compliance}</div>
+              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-900 text-slate-300">
+                {item.status}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Charts Grid: Completion by Institution & Severity Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card
-            title="Submission Compliance Rate by Institution"
-            subtitle="Percentage of uploaded records without active regulatory violations"
+            title="Submission Compliance Rate by Premier Institution"
+            subtitle="Percentage of verified student records within sanctioned AICTE intake ceilings"
             headerAction={
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/aicte/institutions')}
               >
-                <span>All Institutions</span>
+                <span>All 29 Colleges</span>
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             }
@@ -191,8 +287,8 @@ export const AICTEOverview: React.FC = () => {
 
         <div>
           <Card
-            title="Issue Severity Distribution"
-            subtitle="Discrepancies breakdown across all institutions"
+            title="Regulatory Discrepancy Breakdown"
+            subtitle="Active exceptions monitored across national engineering nodes"
           >
             <IssueDistributionChart
               distribution={{
@@ -207,13 +303,12 @@ export const AICTEOverview: React.FC = () => {
         </div>
       </div>
 
-      {/* Data Quality Trend & Verification Distribution */}
+      {/* Quality Trend Line Chart & Verification Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quality Trend Line Chart */}
         <div className="lg:col-span-2">
           <Card
-            title="Data Quality & Integrity Trend"
-            subtitle="Historical trend of compliant submissions vs flagged discrepancies"
+            title="National Academic Ledger Quality Trend"
+            subtitle="Historical timeline of verified APAAR records vs flagged exceptions"
           >
             {isTrendLoading ? (
               <LoadingSpinner size="sm" />
@@ -225,39 +320,40 @@ export const AICTEOverview: React.FC = () => {
                       trendData.length > 0
                         ? trendData
                         : [
-                            { date: 'Day 1', compliant_pct: 88, issues_count: 32 },
-                            { date: 'Day 2', compliant_pct: 91, issues_count: 24 },
-                            { date: 'Day 3', compliant_pct: 89, issues_count: 28 },
-                            { date: 'Day 4', compliant_pct: 94, issues_count: 15 },
-                            { date: 'Day 5', compliant_pct: 95, issues_count: 12 },
-                            { date: 'Day 6', compliant_pct: 97, issues_count: 8 },
+                            { date: 'Oct 23', compliant_pct: 91, issues_count: 28 },
+                            { date: 'Oct 24', compliant_pct: 93, issues_count: 22 },
+                            { date: 'Oct 25', compliant_pct: 94, issues_count: 17 },
+                            { date: 'Oct 26', compliant_pct: 95, issues_count: 14 },
+                            { date: 'Oct 27', compliant_pct: 96, issues_count: 11 },
+                            { date: 'Oct 28', compliant_pct: 97.4, issues_count: 6 },
                           ]
                     }
                     margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} />
-                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '8px',
-                        border: '1px solid #e2e8f0',
+                        backgroundColor: '#0f172a',
+                        borderRadius: '12px',
+                        border: '1px solid #334155',
+                        color: '#f8fafc',
                       }}
                     />
                     <Legend wrapperStyle={{ fontSize: '12px' }} />
                     <Line
                       type="monotone"
                       dataKey="compliant_pct"
-                      name="Compliance Rate (%)"
-                      stroke="#4338ca"
+                      name="Intake Compliance Rate (%)"
+                      stroke="#6366f1"
                       strokeWidth={2.5}
                       dot={{ r: 4 }}
                     />
                     <Line
                       type="monotone"
                       dataKey="issues_count"
-                      name="Active Issues"
+                      name="Active Regulatory Flags"
                       stroke="#ef4444"
                       strokeWidth={2}
                       dot={{ r: 3 }}
@@ -272,8 +368,8 @@ export const AICTEOverview: React.FC = () => {
         {/* Verification Status Distribution Card */}
         <div>
           <Card
-            title="Identity Verification Status"
-            subtitle="APAAR / Aadhaar Hash synthetic resolution"
+            title="Synthetic Identity Resolution"
+            subtitle="APAAR / Aadhaar HMAC cryptographic matching"
           >
             <div className="space-y-4 pt-2">
               {Object.entries(verificationDist).map(([statusKey, count]) => {
@@ -282,19 +378,19 @@ export const AICTEOverview: React.FC = () => {
                 return (
                   <div key={statusKey} className="space-y-1">
                     <div className="flex justify-between text-xs font-semibold">
-                      <span className="capitalize text-gray-700">{statusKey} Verification</span>
-                      <span className="text-gray-900 font-mono">
+                      <span className="capitalize text-slate-300">{statusKey} Verification</span>
+                      <span className="text-white font-mono">
                         {count.toLocaleString()} ({pct}%)
                       </span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
                       <div
-                        className={`h-2 rounded-full ${
+                        className={`h-2.5 rounded-full ${
                           statusKey === 'verified'
-                            ? 'bg-emerald-600'
+                            ? 'bg-emerald-500'
                             : statusKey === 'pending'
                             ? 'bg-amber-500'
-                            : 'bg-rose-600'
+                            : 'bg-rose-500'
                         }`}
                         style={{ width: `${pct}%` }}
                       />
@@ -304,30 +400,38 @@ export const AICTEOverview: React.FC = () => {
               })}
             </div>
 
-            <div className="mt-6 p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
-              <Activity className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+            <div className="mt-6 p-3.5 bg-slate-900 rounded-xl border border-indigo-500/20 text-xs text-slate-300 flex items-start gap-2.5">
+              <Activity className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
               <span>
-                Demonstration identity check simulates Aadhaar cross-verification and duplicate
-                roll detection without transmitting live PII.
+                Demonstration system enforces zero-trust privacy. Only the parent college and AICTE have direct access; external stakeholders must obtain student consent.
               </span>
             </div>
           </Card>
         </div>
       </div>
 
-      {/* Recent High-Severity Issues List */}
+      {/* Urgent High-Severity Exceptions List */}
       <Card
-        title="Urgent High-Severity Regulatory Exceptions"
-        subtitle="Capacity overruns and duplicate enrollment alerts requiring AICTE action"
+        title="High-Priority AICTE Discrepancy & Intake Review Radar"
+        subtitle="Capacity overruns and duplicate enrollment alerts requiring regulatory determination"
         headerAction={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/aicte/reviews')}
-          >
-            <span>Open Review Queue</span>
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/aicte/tracking')}
+            >
+              <span>View Case Timelines</span>
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => navigate('/aicte/reviews')}
+            >
+              <span>Open Review Queue</span>
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
         }
         noPadding
       >
@@ -336,35 +440,35 @@ export const AICTEOverview: React.FC = () => {
             <LoadingSpinner size="sm" />
           </div>
         ) : highSeverityIssues.length === 0 ? (
-          <div className="p-8 text-center text-emerald-700 text-sm font-medium">
-            <CheckCircle2 className="w-6 h-6 mx-auto mb-2 text-emerald-600" />
-            No critical or high-severity issues currently require intervention.
+          <div className="p-8 text-center text-emerald-400 text-sm font-medium">
+            <CheckCircle2 className="w-6 h-6 mx-auto mb-2 text-emerald-500" />
+            All institutions operating within approved AICTE intake quotas.
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-slate-800">
             {highSeverityIssues.map((issue) => (
               <div
                 key={issue.id}
                 onClick={() => navigate(`/aicte/reviews/${issue.id}`)}
-                className="p-4 hover:bg-gray-50 cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                className="p-4 hover:bg-slate-800/60 cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition"
               >
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
-                    <span className="font-mono text-xs font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
+                    <span className="font-mono text-xs font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
                       {issue.rule_code}
                     </span>
                     <SeverityBadge severity={issue.severity} />
-                    <span className="text-xs text-indigo-700 font-semibold">
+                    <span className="text-xs text-indigo-400 font-semibold">
                       {issue.institution_name || 'Institution Node'}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-700 font-medium">{issue.description}</p>
+                  <p className="text-xs text-slate-300 font-medium">{issue.description}</p>
                 </div>
 
                 <div className="flex items-center space-x-3 shrink-0">
                   <StatusBadge status={issue.status} />
                   <Button variant="secondary" size="sm">
-                    Review
+                    Inspect Case
                   </Button>
                 </div>
               </div>

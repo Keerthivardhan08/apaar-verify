@@ -29,6 +29,63 @@ class InstitutionOut(InstitutionBase):
     id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    total_programs: Optional[int] = None
+    total_approved_intake: Optional[int] = None
+    total_enrolled: Optional[int] = None
+    naac_grade: Optional[str] = None
+    nba_status: Optional[str] = None
+    pending_complaints: Optional[int] = None
+    new_intake_status: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InstitutionPortfolioOut(BaseModel):
+    institution_id: uuid.UUID
+    institution_name: str
+    institution_code: str
+    institution_type: str
+    city: str
+    state: str
+    status: str
+
+    # NBA Accreditation
+    nba_tier: str
+    nba_status: str
+    nba_accredited_branches: str
+    nba_valid_until: str
+    nba_file_ref: str
+
+    # NAAC Accreditation
+    naac_grade: str
+    naac_cgpa: str
+    naac_cycle: str
+    naac_valid_until: str
+
+    # Complaints & Grievance Governance
+    complaints_total: int
+    complaints_resolved: int
+    complaints_pending: int
+    complaints_summary: str
+    complaints_resolution_rate: float
+
+    # Intake & Expansion Approvals
+    eoa_reference: str
+    total_approved_intake: int
+    total_enrolled: int
+    utilization_pct: float
+    vacant_seats: int
+    new_intake_applied: int
+    new_intake_branch: str
+    new_intake_status: str
+    new_intake_remarks: str
+
+    # Division of seats among categories
+    category_quotas: dict
+    category_distribution: dict
+
+    # Branch-by-branch analytical comparison
+    programs: List[dict]
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -66,6 +66,101 @@ def list_review_cases(
     }
 
 
+@router.get("/reviews/case-timeline")
+def get_case_timelines(
+    status_filter: Optional[str] = Query(None),
+    severity_filter: Optional[str] = Query(None),
+    current_user: User = Depends(require_roles("aicte_admin", "reviewer")),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns an exhaustive list of all integrity cases with complete 4-stage timeline tracking:
+    - Stage 1: Ingestion & Campus Staging
+    - Stage 2: Validation Engine Discrepancy Flag
+    - Stage 3: Institutional / AICTE Review Assignment
+    - Stage 4: AICTE Final Approval / Decision
+    """
+    from app.models.student import StudentRecord
+    from app.models.institution import Institution, Program
+
+    q = db.query(ValidationIssue)
+    if status_filter:
+        q = q.filter(ValidationIssue.status == status_filter)
+    if severity_filter:
+        q = q.filter(ValidationIssue.severity == severity_filter)
+
+    issues = q.order_by(ValidationIssue.created_at.desc()).limit(100).all()
+
+    timeline_items = []
+    for iss in issues:
+        student = db.query(StudentRecord).filter(StudentRecord.id == iss.record_id).first() if iss.record_id else None
+        inst = db.query(Institution).filter(Institution.id == student.institution_id).first() if student else None
+        prog = db.query(Program).filter(Program.id == student.program_id).first() if student else None
+        reviewer = db.query(User).filter(User.id == iss.assigned_to).first() if iss.assigned_to else None
+
+        current_stage = "AICTE Desk Review"
+        stage_num = 3
+        if iss.status in ["resolved", "corrected", "false_positive"]:
+            current_stage = "AICTE Approved & Closed"
+            stage_num = 4
+        elif iss.status == "open" and not iss.assigned_to:
+            current_stage = "Pending Reviewer Allocation"
+            stage_num = 2
+
+        created_str = iss.created_at.strftime("%Y-%m-%d %H:%M") if iss.created_at else "2026-10-24 10:00"
+
+        timeline_items.append({
+            "case_id": str(iss.id)[:8].upper(),
+            "issue_id": str(iss.id),
+            "rule_code": iss.rule_code,
+            "severity": iss.severity,
+            "description": iss.description,
+            "affected_field": iss.affected_field,
+            "status": iss.status,
+            "current_stage": current_stage,
+            "stage_number": stage_num,
+            "student_name": student.student_name if student else "Intake Limit Aggregation Case",
+            "apaar_id": student.identity_reference if student else "SYSTEM-WIDE",
+            "roll_no": student.institution_student_id if student else "N/A",
+            "institution_name": inst.name if inst else "Unknown Institution",
+            "institution_code": inst.institution_code if inst else "N/A",
+            "program_name": prog.program_name if prog else "N/A",
+            "assigned_reviewer": reviewer.full_name if reviewer else "Unassigned (AICTE Central Queue)",
+            "timeline": [
+                {
+                    "stage": "Campus SIS Ingestion",
+                    "status": "completed",
+                    "timestamp": created_str,
+                    "location": f"{inst.name if inst else 'Institution'} Campus ERP",
+                    "details": "Batch intake records ingested via secure institution gateway.",
+                },
+                {
+                    "stage": "Deterministic Integrity Flag",
+                    "status": "completed",
+                    "timestamp": created_str,
+                    "location": "AICTE Core Integrity Engine",
+                    "details": f"Rule breached: {iss.rule_code} ({iss.severity.upper()} Severity).",
+                },
+                {
+                    "stage": "AICTE Officer Review",
+                    "status": "completed" if stage_num >= 3 else "active",
+                    "timestamp": "Under Review" if stage_num == 3 else "Assigned",
+                    "location": "AICTE Central Review Desk",
+                    "details": f"Desk Officer: {reviewer.full_name if reviewer else 'Pending AICTE Allocation'}.",
+                },
+                {
+                    "stage": "Final AICTE Sanction & Ledger Apply",
+                    "status": "completed" if stage_num == 4 else "pending",
+                    "timestamp": iss.resolved_at.strftime("%Y-%m-%d %H:%M") if iss.resolved_at else "Pending Resolution",
+                    "location": "MoE / AICTE National Ledger",
+                    "details": f"Resolution: {iss.resolution_reason or 'Awaiting final administrative determination.'}",
+                },
+            ]
+        })
+
+    return timeline_items
+
+
 @router.post("/reviews/{issue_id}/decision")
 def make_review_decision(
     issue_id: uuid.UUID,

@@ -27,8 +27,10 @@ import {
   ExternalLink,
   ShieldCheck,
   RefreshCw,
+  Award,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import InstitutePortfolioModal from '../../components/institutions/InstitutePortfolioModal';
 
 export const InstitutionComplianceDashboard: React.FC = () => {
   const { id: routeInstId } = useParams<{ id: string }>();
@@ -39,6 +41,7 @@ export const InstitutionComplianceDashboard: React.FC = () => {
   const effectiveInstitutionId = routeInstId || getUserInstitutionId();
 
   const [cycle, setCycle] = useState('2026-27');
+  const [showPortfolioModal, setShowPortfolioModal] = useState(false);
   const [data, setData] = useState<InstitutionComplianceData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -249,6 +252,15 @@ export const InstitutionComplianceDashboard: React.FC = () => {
               <option value="2024-25">2024-25</option>
             </select>
           </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowPortfolioModal(true)}
+            icon={<Award className="w-3.5 h-3.5 text-indigo-600" />}
+            className="font-bold border-indigo-200 text-indigo-900 hover:bg-indigo-50"
+          >
+            Institute Portfolio
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -745,6 +757,12 @@ export const InstitutionComplianceDashboard: React.FC = () => {
           </table>
         </div>
       </Card>
+      {/* Institute Portfolio Modal */}
+      <InstitutePortfolioModal
+        institutionId={effectiveInstitutionId || null}
+        isOpen={showPortfolioModal}
+        onClose={() => setShowPortfolioModal(false)}
+      />
     </div>
   );
 };

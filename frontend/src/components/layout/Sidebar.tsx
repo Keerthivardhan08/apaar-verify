@@ -13,7 +13,6 @@ import {
   Building2,
   ShieldCheck,
   CheckSquare,
-  FileSearch,
   LineChart,
   GraduationCap,
   Network,
@@ -21,6 +20,8 @@ import {
   Key,
   Clock,
   Sparkles,
+  Search,
+  GitBranch,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -38,20 +39,24 @@ export const Sidebar: React.FC = () => {
     { label: 'Intake Monitoring', to: '/institution/intake', icon: FileSpreadsheet },
     { label: 'Reports', to: '/institution/reports', icon: FileSpreadsheet },
     { label: 'Campus ERP & APIs', to: '/institution/api-keys', icon: Key },
+    { label: 'Student Portal', to: '/student', icon: GraduationCap },
     { label: 'Public Verifier', to: '/verify', icon: QrCode },
   ];
 
   const aicteNavItems = [
-    { label: 'Overview', to: '/aicte', icon: LayoutDashboard, end: true },
-    { label: 'Institutions', to: '/aicte/institutions', icon: Building2 },
-    { label: 'Integrity Monitoring', to: '/aicte/integrity', icon: ShieldCheck },
+    { label: 'Command Center', to: '/aicte', icon: LayoutDashboard, end: true },
+    { label: 'Institutions Directory', to: '/aicte/institutions', icon: Building2 },
+    { label: 'Student & APAAR Inspector', to: '/aicte/student-inspector', icon: Search },
+    { label: 'Case Tracking & Timeline', to: '/aicte/tracking', icon: GitBranch },
+    { label: 'Stakeholder Governance', to: '/aicte/stakeholders', icon: ShieldCheck },
+    { label: 'Integrity Monitoring', to: '/aicte/integrity', icon: AlertTriangle },
     { label: 'Integrity Graph', to: '/aicte/graph', icon: Network },
-    { label: 'Integrations & Trust', to: '/aicte/integrations', icon: Key },
-    { label: 'Freshness & SLA', to: '/aicte/freshness', icon: Clock },
     { label: 'Review Queue', to: '/aicte/reviews', icon: CheckSquare },
-    { label: 'Audit Explorer', to: '/aicte/audit', icon: FileSearch },
+    { label: 'Freshness & SLA', to: '/aicte/freshness', icon: Clock },
     { label: 'Statutory Reports', to: '/aicte/reports', icon: FileSpreadsheet },
     { label: 'Analytics', to: '/aicte/analytics', icon: LineChart },
+    { label: 'Student Portal', to: '/student', icon: GraduationCap },
+    { label: 'Stakeholder Workspace', to: '/stakeholder', icon: Key },
     { label: 'Public Verifier', to: '/verify', icon: QrCode },
   ];
 
@@ -69,15 +74,15 @@ export const Sidebar: React.FC = () => {
             APAAR Verify
           </span>
           <span className="text-[10px] text-indigo-300/80 font-bold tracking-wider uppercase">
-            {isAICTEAdmin() ? 'Central AICTE Portal' : 'Institution Node'}
+            {isAICTEAdmin() ? 'Central AICTE Apex' : 'Institution Node'}
           </span>
         </div>
       </div>
 
       {/* Nav Menu */}
-      <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
+      <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
         <div className="px-3 pb-2 text-[10px] font-bold text-slate-400/80 uppercase tracking-widest">
-          {isAICTEAdmin() ? 'Regulatory Operations' : 'Academic Workspace'}
+          {isAICTEAdmin() ? 'Apex Regulatory Suite' : 'Academic Workspace'}
         </div>
 
         {navItems.map((item) => {
@@ -88,7 +93,7 @@ export const Sidebar: React.FC = () => {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `group flex items-center px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                `group flex items-center px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ${
                   isActive
                     ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/30 border border-indigo-400/30'
                     : 'text-slate-300 hover:bg-slate-800/60 hover:text-white hover:translate-x-0.5'
@@ -102,18 +107,12 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
-      {/* Footer System Status Badge */}
-      <div className="p-4 border-t border-slate-800/60 text-[11px] text-slate-400 bg-slate-950/40">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-medium text-slate-300">Integrity Node</span>
-          </div>
-          <span className="text-emerald-400 font-mono text-[10px] bg-emerald-950/60 border border-emerald-800/60 px-1.5 py-0.5 rounded">v0.1.0</span>
+      {/* Security Status Footer Pill */}
+      <div className="p-3 border-t border-slate-800/60 text-center">
+        <div className="text-[10px] text-slate-400 bg-slate-800/40 py-1.5 px-2 rounded-lg border border-slate-700/50 flex items-center justify-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span>PKI RS256 Trust Active</span>
         </div>
-        <p className="text-slate-400/80 text-[10px] leading-tight mt-1">
-          MoE / AICTE Academic Data Compliance
-        </p>
       </div>
     </aside>
   );

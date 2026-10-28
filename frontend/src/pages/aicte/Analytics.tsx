@@ -382,41 +382,62 @@ export const Analytics: React.FC = () => {
                   <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold uppercase text-gray-500">
                     <tr>
                       <th className="px-4 py-3">Rule Code & Name</th>
-                      <th className="px-4 py-3">Category</th>
-                      <th className="px-4 py-3">Total Flagged</th>
-                      <th className="px-4 py-3">Precision %</th>
-                      <th className="px-4 py-3">False Positive %</th>
+                      <th className="px-4 py-3">Severity Tag</th>
+                      <th className="px-4 py-3">Automatic Assigned Department</th>
+                      <th className="px-4 py-3">Conflict Escalation Protocol</th>
+                      <th className="px-4 py-3 text-center">Active Conflicts</th>
+                      <th className="px-4 py-3 text-center">Precision %</th>
                       <th className="px-4 py-3">Recommendation</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {(modelPerf?.rule_performance || []).map((rule: any) => (
-                      <tr key={rule.rule_code} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-3.5 font-medium text-gray-900">
-                          <div>{rule.rule_name}</div>
-                          <span className="text-xs font-mono text-indigo-700">{rule.rule_code}</span>
-                        </td>
-                        <td className="px-4 py-3.5 text-xs text-gray-500">
-                          <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700">{rule.category}</span>
-                        </td>
-                        <td className="px-4 py-3.5 text-sm font-semibold text-gray-900">
-                          {rule.total_flagged}
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <span className="text-sm font-bold text-green-700">{rule.precision_pct}%</span>
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <span className={`text-sm font-semibold ${rule.false_positive_rate_pct > 10 ? 'text-red-600' : 'text-gray-500'}`}>
-                            {rule.false_positive_rate_pct}%
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5 text-xs text-gray-600">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700">
-                            {rule.recommendation}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {(modelPerf?.rule_performance || []).map((rule: any) => {
+                      const sev = (rule.severity || 'medium').toLowerCase();
+                      const sevBadgeClass =
+                        sev === 'critical'
+                          ? 'bg-rose-100 text-rose-800 border-rose-300 font-black'
+                          : sev === 'high'
+                          ? 'bg-amber-100 text-amber-800 border-amber-300 font-bold'
+                          : sev === 'medium'
+                          ? 'bg-blue-100 text-blue-800 border-blue-300 font-semibold'
+                          : 'bg-slate-100 text-slate-700 border-slate-300';
+
+                      return (
+                        <tr key={rule.rule_code} className="hover:bg-gray-50/50">
+                          <td className="px-4 py-3.5 font-medium text-gray-900">
+                            <div>{rule.rule_name}</div>
+                            <span className="text-xs font-mono text-indigo-700">{rule.rule_code}</span>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs uppercase border ${sevBadgeClass}`}>
+                              {sev}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-xs text-gray-900 font-semibold">
+                            <div className="flex items-center space-x-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 shrink-0" />
+                              <span>{rule.assigned_department || 'General Regulatory Oversight Bureau'}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5 text-xs text-gray-600 max-w-xs">
+                            <p className="line-clamp-2">{rule.conflict_escalation_protocol || 'Automatic escalation to assigned cell.'}</p>
+                          </td>
+                          <td className="px-4 py-3.5 text-center text-sm font-bold text-gray-900">
+                            <span className={rule.total_flagged > 0 ? 'text-rose-600' : 'text-emerald-600'}>
+                              {rule.total_flagged}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-center">
+                            <span className="text-sm font-bold text-green-700">{rule.precision_pct}%</span>
+                          </td>
+                          <td className="px-4 py-3.5 text-xs text-gray-600">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700">
+                              {rule.recommendation}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

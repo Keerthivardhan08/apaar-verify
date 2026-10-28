@@ -8,7 +8,8 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
-import { Building2, School, MapPin, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react';
+import InstitutePortfolioModal from '../../components/institutions/InstitutePortfolioModal';
+import { Building2, School, MapPin, ExternalLink, ShieldCheck, AlertTriangle, Award, Layers, BarChart3 } from 'lucide-react';
 
 export const Institutions: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export const Institutions: React.FC = () => {
   });
 
   const [selectedInst, setSelectedInst] = useState<Institution | null>(null);
+  const [portfolioInstId, setPortfolioInstId] = useState<string | null>(null);
 
   const { data: institutions = [], isLoading, isError, refetch } = useInstitutions({
     state: filters.state || undefined,
@@ -36,7 +38,8 @@ export const Institutions: React.FC = () => {
       return (
         inst.name.toLowerCase().includes(q) ||
         inst.institution_code.toLowerCase().includes(q) ||
-        inst.city.toLowerCase().includes(q)
+        inst.city.toLowerCase().includes(q) ||
+        inst.state.toLowerCase().includes(q)
       );
     }
     return true;
@@ -48,11 +51,16 @@ export const Institutions: React.FC = () => {
       label: 'State',
       type: 'select',
       options: [
-        { label: 'Delhi', value: 'Delhi' },
-        { label: 'Maharashtra', value: 'Maharashtra' },
         { label: 'Karnataka', value: 'Karnataka' },
+        { label: 'Maharashtra', value: 'Maharashtra' },
+        { label: 'Delhi', value: 'Delhi' },
         { label: 'Tamil Nadu', value: 'Tamil Nadu' },
-        { label: 'Uttar Pradesh', value: 'Uttar Pradesh' },
+        { label: 'Telangana', value: 'Telangana' },
+        { label: 'Rajasthan', value: 'Rajasthan' },
+        { label: 'Punjab', value: 'Punjab' },
+        { label: 'West Bengal', value: 'West Bengal' },
+        { label: 'Kerala', value: 'Kerala' },
+        { label: 'Uttarakhand', value: 'Uttarakhand' },
       ],
     },
     {
@@ -60,9 +68,9 @@ export const Institutions: React.FC = () => {
       label: 'Type',
       type: 'select',
       options: [
-        { label: 'Autonomous / IIT / NIT', value: 'CENTRAL_INSTITUTE' },
-        { label: 'State University', value: 'STATE_UNIVERSITY' },
-        { label: 'Private Technical College', value: 'PRIVATE_COLLEGE' },
+        { label: 'Central Institutes (IIT/NIT/IIIT/BITS)', value: 'CENTRAL_INSTITUTE' },
+        { label: 'State Universities (DTU/COEP/Anna/VJTI)', value: 'STATE_UNIVERSITY' },
+        { label: 'Private Technical Colleges (RVCE/BMS/DSCE/PSG)', value: 'PRIVATE_COLLEGE' },
       ],
     },
     {
@@ -83,14 +91,14 @@ export const Institutions: React.FC = () => {
       header: 'Code',
       sortable: true,
       render: (row) => (
-        <span className="font-mono text-xs font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
+        <span className="font-mono text-xs font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
           {row.institution_code}
         </span>
       ),
     },
     {
       key: 'name',
-      header: 'Institution Name',
+      header: 'Institution & Location',
       sortable: true,
       render: (row) => (
         <div>
@@ -103,59 +111,94 @@ export const Institutions: React.FC = () => {
       ),
     },
     {
-      key: 'institution_type',
-      header: 'Type',
+      key: 'accreditation',
+      header: 'Accreditation',
       render: (row) => (
-        <Badge variant="secondary" size="sm">
-          {row.institution_type.replace(/_/g, ' ')}
-        </Badge>
+        <div className="flex flex-col gap-1 items-start">
+          {row.naac_grade && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+              <Award className="w-3 h-3 text-amber-600" />
+              NAAC {row.naac_grade}
+            </span>
+          )}
+          {row.nba_status && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200">
+              NBA {row.nba_status}
+            </span>
+          )}
+        </div>
       ),
     },
     {
-      key: 'total_records',
-      header: 'Total Records',
-      className: 'text-right',
-      headerClassName: 'text-right',
+      key: 'branches',
+      header: 'Branches',
+      className: 'text-center',
+      headerClassName: 'text-center',
       render: (row) => (
-        <span className="font-mono text-gray-900 font-semibold">
-          {(row.total_records || 0).toLocaleString()}
+        <span className="font-mono text-xs font-bold text-indigo-900 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200 inline-flex items-center gap-1">
+          <Layers className="w-3 h-3 text-indigo-600" />
+          {row.total_programs || 0} Branches
         </span>
       ),
     },
     {
-      key: 'flagged_records',
-      header: 'Flags',
-      className: 'text-right',
-      headerClassName: 'text-right',
+      key: 'intake_enrolled',
+      header: 'Enrolled / Approved Intake',
+      className: 'text-left min-w-[160px]',
       render: (row) => {
-        const flagged = row.flagged_records || 0;
-        return flagged > 0 ? (
-          <span className="font-mono text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-            {flagged}
-          </span>
-        ) : (
-          <span className="text-xs text-emerald-600 font-medium">0</span>
+        const approved = row.total_approved_intake || 0;
+        const enrolled = row.total_enrolled || 0;
+        const pct = approved > 0 ? Math.round((enrolled / approved) * 100) : 0;
+        const isBreach = pct > 100;
+        const barColor = isBreach ? 'bg-rose-500' : pct < 85 ? 'bg-amber-500' : 'bg-emerald-500';
+
+        return (
+          <div>
+            <div className="flex items-center justify-between text-xs font-mono mb-1">
+              <span className="font-bold text-gray-900">{enrolled.toLocaleString()} / {approved.toLocaleString()}</span>
+              <span className={`font-bold ${isBreach ? 'text-rose-600' : 'text-gray-600'}`}>{pct}%</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+              <div className={`h-1.5 rounded-full ${barColor}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+            </div>
+          </div>
         );
       },
     },
     {
-      key: 'status',
-      header: 'Status',
-      render: (row) => <StatusBadge status={row.status} />,
+      key: 'complaints',
+      header: 'Complaints',
+      className: 'text-center',
+      headerClassName: 'text-center',
+      render: (row) => {
+        const pending = row.pending_complaints || 0;
+        return pending > 0 ? (
+          <span className="font-mono text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+            {pending} Pending
+          </span>
+        ) : (
+          <span className="text-xs text-emerald-600 font-semibold flex items-center justify-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            0 Pending
+          </span>
+        );
+      },
     },
     {
       key: 'actions',
       header: 'Action',
-      className: 'text-right',
+      className: 'text-right min-w-[200px]',
       headerClassName: 'text-right',
       render: (row) => (
         <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-end gap-1.5">
           <Button
-            variant="ghost"
+            variant="secondary"
             size="sm"
-            onClick={() => setSelectedInst(row)}
+            onClick={() => setPortfolioInstId(row.id)}
+            icon={<Award className="w-3.5 h-3.5 text-indigo-600" />}
+            className="font-bold border-indigo-200 text-indigo-900 hover:bg-indigo-50"
           >
-            Quick View
+            Portfolio
           </Button>
           <Button
             variant="primary"
@@ -174,9 +217,9 @@ export const Institutions: React.FC = () => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Institutions Directory</h1>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Institutions Directory & Accreditation Registry</h1>
           <p className="text-sm text-gray-500">
-            National register of participating colleges and technical institutes under AICTE jurisdiction.
+            National register of {institutions.length} technical institutions under AICTE jurisdiction with NBA, NAAC, complaints desk and seat utilization analytics.
           </p>
         </div>
       </div>
@@ -188,7 +231,7 @@ export const Institutions: React.FC = () => {
         onClear={() => setFilters({ state: '', type: '', status: '' })}
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search institution name or code..."
+        searchPlaceholder="Search institution name, code, state, or city..."
       />
 
       <DataTable
@@ -198,12 +241,20 @@ export const Institutions: React.FC = () => {
         isLoading={isLoading}
         isError={isError}
         onRetry={refetch}
-        onRowClick={(row) => navigate(`/aicte/institutions/${row.id}`)}
+        onRowClick={(row) => setPortfolioInstId(row.id)}
         emptyTitle="No Institutions Found"
         emptyDescription="No registered institutions matched your search criteria."
       />
 
-      {/* Institution Detail Modal */}
+      {/* Comprehensive Institute Portfolio Modal */}
+      <InstitutePortfolioModal
+        institutionId={portfolioInstId}
+        isOpen={Boolean(portfolioInstId)}
+        onClose={() => setPortfolioInstId(null)}
+        onOpenComplianceDesk={(id) => navigate(`/aicte/institutions/${id}`)}
+      />
+
+      {/* Quick View Modal */}
       <Modal
         isOpen={Boolean(selectedInst)}
         onClose={() => setSelectedInst(null)}
@@ -216,7 +267,7 @@ export const Institutions: React.FC = () => {
             <div className="grid grid-cols-2 gap-4 text-xs bg-gray-50 p-4 rounded-xl border border-gray-200">
               <div>
                 <span className="text-gray-500 font-semibold block">Type:</span>
-                <span className="text-gray-900">{selectedInst.institution_type}</span>
+                <span className="text-gray-900 font-medium">{selectedInst.institution_type.replace(/_/g, ' ')}</span>
               </div>
               <div>
                 <span className="text-gray-500 font-semibold block">Status:</span>
@@ -224,13 +275,13 @@ export const Institutions: React.FC = () => {
               </div>
               <div>
                 <span className="text-gray-500 font-semibold block">City & State:</span>
-                <span className="text-gray-900">
+                <span className="text-gray-900 font-medium">
                   {selectedInst.city}, {selectedInst.state}
                 </span>
               </div>
               <div>
-                <span className="text-gray-500 font-semibold block">Regulatory Jurisdiction:</span>
-                <span className="text-indigo-700 font-medium">AICTE Northern/Western Regional Node</span>
+                <span className="text-gray-500 font-semibold block">Total Programs (Branches):</span>
+                <span className="text-indigo-700 font-bold">{selectedInst.total_programs || 0} Engineering Branches</span>
               </div>
             </div>
 
@@ -246,11 +297,13 @@ export const Institutions: React.FC = () => {
                 variant="secondary"
                 size="sm"
                 onClick={() => {
+                  const id = selectedInst.id;
                   setSelectedInst(null);
-                  navigate(`/aicte/integrity?institution_id=${selectedInst.id}`);
+                  setPortfolioInstId(id);
                 }}
+                icon={<Award className="w-3.5 h-3.5 text-indigo-600" />}
               >
-                Inspect Integrity Flags
+                View Full Portfolio
               </Button>
               <Button
                 variant="primary"

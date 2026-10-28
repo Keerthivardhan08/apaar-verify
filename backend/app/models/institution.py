@@ -23,6 +23,7 @@ class Institution(Base):
     user_roles: Mapped[List["UserRole"]] = relationship("UserRole", back_populates="institution")
     student_records: Mapped[List["StudentRecord"]] = relationship("StudentRecord", back_populates="institution")
     upload_batches: Mapped[List["UploadBatch"]] = relationship("UploadBatch", back_populates="institution")
+    portfolio: Mapped[Optional["InstitutionPortfolio"]] = relationship("InstitutionPortfolio", back_populates="institution", uselist=False, cascade="all, delete-orphan")
 
 
 class Program(Base):
@@ -60,3 +61,44 @@ class IntakeLimit(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     program: Mapped["Program"] = relationship("Program", back_populates="intake_limits")
+
+
+class InstitutionPortfolio(Base):
+    __tablename__ = "institution_portfolios"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    institution_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("institutions.id", ondelete="CASCADE"), unique=True, index=True)
+
+    # NBA Accreditation
+    nba_tier: Mapped[str] = mapped_column(String(50), default="Tier-1")
+    nba_status: Mapped[str] = mapped_column(String(50), default="Accredited")
+    nba_accredited_branches: Mapped[str] = mapped_column(String(500), default="CSE, ECE, EEE, ME, Civil")
+    nba_valid_until: Mapped[str] = mapped_column(String(50), default="2028-06-30")
+    nba_file_ref: Mapped[str] = mapped_column(String(100), default="NBA/ACCR/2024/AICTE")
+
+    # NAAC Accreditation
+    naac_grade: Mapped[str] = mapped_column(String(20), default="A++")
+    naac_cgpa: Mapped[str] = mapped_column(String(20), default="3.78")
+    naac_cycle: Mapped[str] = mapped_column(String(50), default="Cycle 3")
+    naac_valid_until: Mapped[str] = mapped_column(String(50), default="2028-11-30")
+
+    # Complaints & Grievances Desk
+    complaints_total: Mapped[int] = mapped_column(Integer, default=5)
+    complaints_resolved: Mapped[int] = mapped_column(Integer, default=4)
+    complaints_pending: Mapped[int] = mapped_column(Integer, default=1)
+    complaints_summary: Mapped[str] = mapped_column(String(500), default="Hostel maintenance grievance resolved; academic and anti-ragging compliance 100% satisfactory.")
+
+    # Intake Approval Details
+    eoa_reference: Mapped[str] = mapped_column(String(100), default="AICTE/EOA/2026-27/F.No-1-9328471")
+    new_intake_applied: Mapped[int] = mapped_column(Integer, default=60)
+    new_intake_branch: Mapped[str] = mapped_column(String(100), default="B.Tech Artificial Intelligence & Data Science")
+    new_intake_status: Mapped[str] = mapped_column(String(50), default="Approved")  # Approved / Under Inspection / Pending State NOC
+    new_intake_remarks: Mapped[str] = mapped_column(String(500), default="Approved by AICTE Scrutiny Committee for AY 2026-27 intake expansion.")
+
+    # Division of seats among categories (Percentages)
+    seat_division_json: Mapped[str] = mapped_column(String(1000), default='{"general": 40.5, "obc": 27.0, "sc": 15.0, "st": 7.5, "ews": 10.0, "supernumerary": 5.0}')
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    institution: Mapped["Institution"] = relationship("Institution", back_populates="portfolio")

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { authApi } from '../services/api';
+import toast from 'react-hot-toast';
 import {
   GraduationCap,
   ShieldCheck,
@@ -22,6 +24,8 @@ import {
   Loader2,
   Lock,
   Briefcase,
+  UserPlus,
+  FileText,
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 
@@ -153,7 +157,7 @@ const DEMO_PERSONAS: DemoPersona[] = [
     displayName: 'Student (Aarav Sharma)',
     category: 'students',
     institutionName: 'APAAR ID: DEMO-APAAR-1001 (DSCE)',
-    email: 'student@dsce.edu.in',
+    email: 'DEMO-APAAR-1001',
     password: 'Demo@1234',
     destination: '/student',
     icon: GraduationCap,
@@ -239,37 +243,57 @@ const DEMO_PERSONAS: DemoPersona[] = [
 ];
 
 export const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
+  // Navigation & Authentication
+  const [authMode, setAuthMode] = useState<'login' | 'register_student' | 'register_stakeholder'>('login');
+
+  // Sign In State
+  const [identifier, setIdentifier] = useState(''); // Email or APAAR ID
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activePersonaEmail, setActivePersonaEmail] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'operators' | 'aicte' | 'stakeholders' | 'students' | 'admins'>('all');
+  const [stakeholderNotice, setStakeholderNotice] = useState<string | null>(null);
 
-  const { login } = useAuth();
+  // Student Registration State
+  const [studentApaar, setStudentApaar] = useState('');
+  const [studentName, setStudentName] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
+  const [studentPassword, setStudentPassword] = useState('');
+
+  // Stakeholder Registration State
+  const [orgName, setOrgName] = useState('');
+  const [orgType, setOrgType] = useState('CORPORATE_EMPLOYER');
+  const [contactPerson, setContactPerson] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [orgPurpose, setOrgPurpose] = useState('');
+  const [orgPassword, setOrgPassword] = useState('');
+
+  const { login, registerStudent } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = (location.state as any)?.from?.pathname;
 
-  const performLogin = async (targetEmail: string, targetPass: string, preferredDestination?: string) => {
+  const performLogin = async (targetIdentifier: string, targetPass: string, preferredDestination?: string) => {
     setIsSubmitting(true);
+    setStakeholderNotice(null);
     try {
-      const success = await login(targetEmail, targetPass);
+      const success = await login(targetIdentifier, targetPass);
       if (success) {
         if (preferredDestination) {
           navigate(preferredDestination, { replace: true });
         } else if (from) {
           navigate(from, { replace: true });
-        } else if (targetEmail.toLowerCase().includes('student')) {
+        } else if (targetIdentifier.toLowerCase().includes('student') || targetIdentifier.toUpperCase().includes('APAAR')) {
           navigate('/student', { replace: true });
         } else if (
-          targetEmail.toLowerCase().includes('nta') ||
-          targetEmail.toLowerCase().includes('tcs') ||
-          targetEmail.toLowerCase().includes('verifier')
+          targetIdentifier.toLowerCase().includes('nta') ||
+          targetIdentifier.toLowerCase().includes('tcs') ||
+          targetIdentifier.toLowerCase().includes('verifier')
         ) {
           navigate('/stakeholder', { replace: true });
-        } else if (targetEmail.toLowerCase().includes('aicte')) {
+        } else if (targetIdentifier.toLowerCase().includes('aicte')) {
           navigate('/aicte', { replace: true });
         } else {
           navigate('/institution', { replace: true });
@@ -281,18 +305,65 @@ export const Login: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || isSubmitting) return;
-    await performLogin(email, password);
+    if (!identifier || !password || isSubmitting) return;
+    await performLogin(identifier, password);
   };
 
   const handle1ClickLogin = async (persona: DemoPersona) => {
     if (isSubmitting) return;
-    setEmail(persona.email);
+    setIdentifier(persona.email);
     setPassword(persona.password);
     setActivePersonaEmail(persona.email);
     await performLogin(persona.email, persona.password, persona.destination);
+  };
+
+  const handleStudentRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentApaar || !studentEmail || !studentPassword || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const success = await registerStudent({
+        apaar_id: studentApaar.trim(),
+        full_name: studentName.trim() || undefined,
+        email: studentEmail.trim().toLowerCase(),
+        password: studentPassword,
+      });
+
+      if (success) {
+        navigate('/student', { replace: true });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStakeholderRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orgName || !contactEmail || !orgPassword || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await authApi.registerStakeholder({
+        organization_name: orgName.trim(),
+        entity_type: orgType,
+        contact_person: contactPerson.trim(),
+        contact_email: contactEmail.trim().toLowerCase(),
+        purpose: orgPurpose.trim() || 'Academic Credential & Intake Verification',
+        password: orgPassword,
+      });
+
+      toast.success(res.message, { duration: 6000 });
+      setStakeholderNotice(res.message);
+      setIdentifier(contactEmail.trim().toLowerCase());
+      setAuthMode('login');
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Failed to submit organization registration');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filteredPersonas =
@@ -303,7 +374,7 @@ export const Login: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans flex flex-col">
       {/* ================= DEMONSTRATION BANNER ================= */}
-      <div className="relative z-20 bg-amber-500/10 border-b border-amber-300/60 px-4 py-2.5 backdrop-blur-sm">
+      <div className="relative z-20 bg-amber-500/10 border-b border-amber-300/60 px-4 py-2 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 text-center text-xs sm:text-sm font-semibold text-amber-950">
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
           <span>DEMONSTRATION SYSTEM — MoE / AICTE National APAAR Verification & Intake Oversight Platform</span>
@@ -335,8 +406,8 @@ export const Login: React.FC = () => {
           </div>
 
           {/* Center Pitch */}
-          <div className="relative z-10 my-10 lg:my-0">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold mb-6">
+          <div className="relative z-10 my-8 lg:my-0">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold mb-5">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               National Academic Trust Network
             </span>
@@ -346,33 +417,33 @@ export const Login: React.FC = () => {
                 Every Academic Record.
               </span>
             </h2>
-            <p className="text-indigo-200/80 text-sm sm:text-base leading-relaxed mt-5 max-w-lg">
-              A comprehensive platform for instant APAAR credential verification, statutory intake quota compliance, and tamper-evident student records management.
+            <p className="text-indigo-200/80 text-sm sm:text-base leading-relaxed mt-4 max-w-lg">
+              Support for instant Student APAAR ID login, auto-approved student consent management, and one-time statutory AICTE authorization for corporate & exam verifiers.
             </p>
 
             {/* Feature Highlights */}
-            <div className="mt-8 space-y-4">
+            <div className="mt-7 space-y-3.5">
               {[
                 {
+                  icon: GraduationCap,
+                  title: 'Student APAAR ID Direct Login',
+                  description: 'Students can authenticate directly using their 12-digit APAAR ID with instant auto-approval.',
+                },
+                {
                   icon: ShieldCheck,
-                  title: 'Trusted Verification',
-                  description: 'Cryptographically validated academic records and QR authentication.',
+                  title: 'AICTE Stakeholder Authorization',
+                  description: 'External employers and testing agencies submit one-time registration for AICTE approval.',
                 },
                 {
                   icon: Database,
-                  title: 'Statutory Intake Compliance',
-                  description: 'Real-time seat intake monitoring with 9 regulatory validation checks.',
-                },
-                {
-                  icon: Fingerprint,
-                  title: 'Zero-Discrepancy Integrity',
-                  description: 'AI-assisted resolution desk & multi-stakeholder consent workflows.',
+                  title: 'Intake Quota & Regulatory Compliance',
+                  description: 'Automated 9-rule validation checks against statutory AICTE seat intake ceilings.',
                 },
               ].map((feat) => {
                 const Icon = feat.icon;
                 return (
-                  <div key={feat.title} className="flex items-start gap-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
+                  <div key={feat.title} className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
                       <Icon className="w-4 h-4 text-indigo-300" />
                     </div>
                     <div>
@@ -385,16 +456,16 @@ export const Login: React.FC = () => {
             </div>
 
             {/* Privacy Architecture Highlight */}
-            <div className="mt-8 p-3 rounded-2xl bg-indigo-950/60 border border-indigo-400/20 flex items-center gap-2.5">
+            <div className="mt-7 p-3 rounded-2xl bg-indigo-950/60 border border-indigo-400/20 flex items-center gap-2.5">
               <Lock className="w-4 h-4 text-indigo-300 shrink-0" />
               <p className="text-xs text-indigo-200/90">
-                Default student record access restricted strictly to Institution & AICTE HQ under DPDP Act.
+                DPDP Act Compliant: Access strictly requires student consent and statutory AICTE credential authority.
               </p>
             </div>
           </div>
 
           {/* Bottom Branding */}
-          <div className="relative z-10 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-indigo-200/70">
+          <div className="relative z-10 pt-5 border-t border-white/10 flex items-center justify-between text-xs text-indigo-200/70">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-indigo-400" />
               <span>Academic Integrity & Intake Architecture</span>
@@ -403,11 +474,11 @@ export const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* ================= RIGHT LOGIN & 1-CLICK DEMO PANEL ================= */}
-        <div className="flex-1 flex flex-col justify-center items-center px-4 sm:px-8 lg:px-12 py-10 bg-[#F8FAFC]">
+        {/* ================= RIGHT FORM PANEL (SIGN IN / REGISTER) ================= */}
+        <div className="flex-1 flex flex-col justify-center items-center px-4 sm:px-8 lg:px-12 py-8 bg-[#F8FAFC]">
           <div className="w-full max-w-[560px]">
             {/* Mobile Logo (< lg) */}
-            <div className="lg:hidden flex items-center gap-3 mb-6">
+            <div className="lg:hidden flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md">
                 <GraduationCap className="w-5 h-5" />
               </div>
@@ -417,165 +488,552 @@ export const Login: React.FC = () => {
               </div>
             </div>
 
-            {/* Header */}
-            <div className="mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold mb-3">
-                <LockKeyhole className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Authorized Sign In</span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Welcome back<span className="text-indigo-600">.</span>
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Enter your credentials or use the 1-click persona demo cards below.
-              </p>
+            {/* Auth Mode Tabs Switcher */}
+            <div className="mb-6 bg-slate-200/80 p-1 rounded-2xl flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setAuthMode('login')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                  authMode === 'login'
+                    ? 'bg-white text-indigo-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Sign In (Email / APAAR)
+              </button>
+              <button
+                type="button"
+                onClick={() => setAuthMode('register_student')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  authMode === 'register_student'
+                    ? 'bg-white text-indigo-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                <span>Register Student</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAuthMode('register_stakeholder')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  authMode === 'register_stakeholder'
+                    ? 'bg-white text-indigo-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Register Stakeholder</span>
+              </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                  Official Email Address
-                </label>
-                <div className="relative group">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. operator@dsce.edu.in or admin@aicte.gov.in"
-                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
-                  />
+            {/* Stakeholder Pending Notice Banner if just registered */}
+            {stakeholderNotice && authMode === 'login' && (
+              <div className="mb-5 p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Registration Submitted for AICTE Review</p>
+                  <p className="mt-0.5 text-amber-800 leading-relaxed">{stakeholderNotice}</p>
                 </div>
               </div>
+            )}
 
+            {/* ========================================================
+                VIEW 1: SIGN IN (EMAIL OR APAAR ID)
+            ======================================================== */}
+            {authMode === 'login' && (
               <div>
-                <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                  Password
-                </label>
-                <div className="relative group">
-                  <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter account password"
-                    className="w-full h-11 pl-10 pr-11 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
-                  />
+                <div className="mb-5">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold mb-2">
+                    <LockKeyhole className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Authorized Sign In</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Welcome back<span className="text-indigo-600">.</span>
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Sign in with your <span className="font-semibold text-slate-700">Official Email</span> or <span className="font-semibold text-indigo-600">Student APAAR ID</span>.
+                  </p>
+                </div>
+
+                <form onSubmit={handleLoginSubmit} className="space-y-3.5">
+                  <div>
+                    <label htmlFor="identifier" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      Official Email or Student APAAR ID
+                    </label>
+                    <div className="relative group">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
+                      <input
+                        id="identifier"
+                        name="identifier"
+                        type="text"
+                        autoComplete="username"
+                        required
+                        value={identifier}
+                        onChange={(e) => setIdentifier(e.target.value)}
+                        placeholder="e.g. DEMO-APAAR-1001 or operator@dsce.edu.in"
+                        className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      Password
+                    </label>
+                    <div className="relative group">
+                      <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
+                      <input
+                        id="password"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        autoComplete="current-password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your account password"
+                        className="w-full h-11 pl-10 pr-11 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 p-1"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-1">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="lg"
+                      className="w-full !h-11 !rounded-xl !bg-gradient-to-r !from-indigo-600 !to-violet-600 hover:!from-indigo-700 hover:!to-violet-700 !text-white !font-semibold !shadow-md !shadow-indigo-200 transition-all"
+                      isLoading={isSubmitting && !activePersonaEmail}
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <span>Sign In to Platform</span>
+                        {!isSubmitting && <ArrowRight className="w-4 h-4" />}
+                      </span>
+                    </Button>
+                  </div>
+                </form>
+
+                {/* Quick Registration Links */}
+                <div className="mt-4 flex items-center justify-between text-xs text-slate-500 px-1">
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 p-1"
+                    onClick={() => setAuthMode('register_student')}
+                    className="text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Register Student (Instant)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('register_stakeholder')}
+                    className="text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>Register Stakeholder (AICTE)</span>
+                  </button>
+                </div>
+
+                {/* 1-Click Demonstration Personas */}
+                <div className="mt-6 pt-5 border-t border-slate-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <p className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>1-Click Demonstration Personas</span>
+                    </p>
+
+                    {/* Filter Pills */}
+                    <div className="flex flex-wrap items-center gap-1">
+                      {(
+                        [
+                          { id: 'all', label: 'All' },
+                          { id: 'operators', label: 'Operators' },
+                          { id: 'aicte', label: 'AICTE' },
+                          { id: 'students', label: 'Students' },
+                          { id: 'stakeholders', label: 'Stakeholders' },
+                          { id: 'admins', label: 'Admins' },
+                        ] as const
+                      ).map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setSelectedFilter(tab.id)}
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors ${
+                            selectedFilter === tab.id
+                              ? 'bg-indigo-600 text-white shadow-xs'
+                              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/70'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Persona Cards Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[230px] overflow-y-auto pr-1">
+                    {filteredPersonas.map((persona) => {
+                      const isLoadingThis = isSubmitting && activePersonaEmail === persona.email;
+                      const Icon = persona.icon;
+                      return (
+                        <button
+                          key={persona.displayName}
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => handle1ClickLogin(persona)}
+                          className={`group relative text-left p-2.5 rounded-xl bg-white border border-slate-200 ${persona.theme.borderHover} ${persona.theme.bgHover} hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 flex items-start gap-2.5 disabled:opacity-60`}
+                        >
+                          <div className={`w-8 h-8 rounded-lg ${persona.theme.iconBg} flex items-center justify-center shrink-0 mt-0.5`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-xs font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
+                                {persona.displayName}
+                              </h4>
+                              {isLoadingThis ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600 shrink-0 ml-1" />
+                              ) : (
+                                <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                              {persona.institutionName}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ========================================================
+                VIEW 2: STUDENT REGISTRATION (INSTANT AUTO-APPROVAL)
+            ======================================================== */}
+            {authMode === 'register_student' && (
+              <div>
+                <div className="mb-5">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold mb-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Instant Auto-Approved Registration</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Student Registration
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Enter your APAAR ID to link your academic record. Once registered, your account is immediately approved for instant login.
+                  </p>
+                </div>
+
+                <form onSubmit={handleStudentRegister} className="space-y-3.5">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label htmlFor="studentApaar" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                        APAAR ID *
+                      </label>
+                      <span className="text-[10px] text-indigo-600 font-semibold">Try: DEMO-APAAR-1001</span>
+                    </div>
+                    <div className="relative group">
+                      <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
+                      <input
+                        id="studentApaar"
+                        name="studentApaar"
+                        type="text"
+                        required
+                        value={studentApaar}
+                        onChange={(e) => setStudentApaar(e.target.value)}
+                        placeholder="e.g. DEMO-APAAR-1001 or 1234-5678-9012"
+                        className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="studentName" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      Student Full Name (Optional)
+                    </label>
+                    <div className="relative group">
+                      <input
+                        id="studentName"
+                        name="studentName"
+                        type="text"
+                        value={studentName}
+                        onChange={(e) => setStudentName(e.target.value)}
+                        placeholder="e.g. Aarav Sharma (Auto-fetched if found in APAAR ledger)"
+                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="studentEmail" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      Student Email Address *
+                    </label>
+                    <div className="relative group">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
+                      <input
+                        id="studentEmail"
+                        name="studentEmail"
+                        type="email"
+                        required
+                        value={studentEmail}
+                        onChange={(e) => setStudentEmail(e.target.value)}
+                        placeholder="e.g. aarav@dsce.edu.in"
+                        className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="studentPassword" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      Create Password *
+                    </label>
+                    <div className="relative group">
+                      <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
+                      <input
+                        id="studentPassword"
+                        name="studentPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={studentPassword}
+                        onChange={(e) => setStudentPassword(e.target.value)}
+                        placeholder="Create a strong account password"
+                        className="w-full h-11 pl-10 pr-11 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 p-1"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900 text-xs">
+                    <p className="font-semibold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Zero-Wait Automatic Approval</span>
+                    </p>
+                    <p className="text-[11px] text-emerald-800 mt-0.5">
+                      Upon completing registration, your student portal session will open immediately without waiting for administrator approval.
+                    </p>
+                  </div>
+
+                  <div className="pt-1">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="lg"
+                      className="w-full !h-11 !rounded-xl !bg-gradient-to-r !from-emerald-600 !to-teal-600 hover:!from-emerald-700 hover:!to-teal-700 !text-white !font-semibold !shadow-md !shadow-emerald-200 transition-all"
+                      isLoading={isSubmitting}
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <span>Register & Instant Sign In</span>
+                        {!isSubmitting && <ArrowRight className="w-4 h-4" />}
+                      </span>
+                    </Button>
+                  </div>
+                </form>
+
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('login')}
+                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                  >
+                    ← Already registered? Back to Sign In
                   </button>
                 </div>
               </div>
+            )}
 
-              <div className="pt-1">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  className="w-full !h-11 !rounded-xl !bg-gradient-to-r !from-indigo-600 !to-violet-600 hover:!from-indigo-700 hover:!to-violet-700 !text-white !font-semibold !shadow-md !shadow-indigo-200 transition-all"
-                  isLoading={isSubmitting && !activePersonaEmail}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <span>Sign In to Platform</span>
-                    {!isSubmitting && <ArrowRight className="w-4 h-4" />}
-                  </span>
-                </Button>
-              </div>
-            </form>
+            {/* ========================================================
+                VIEW 3: STAKEHOLDER REGISTRATION (AICTE APPROVAL WORKFLOW)
+            ======================================================== */}
+            {authMode === 'register_stakeholder' && (
+              <div>
+                <div className="mb-5">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold mb-2">
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Statutory AICTE Approval Required</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Stakeholder Registration
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Corporate employers, exam bodies, and verification agencies must complete one-time onboarding for AICTE authorization.
+                  </p>
+                </div>
 
-            {/* ================= 1-CLICK DEMONSTRATION PERSONAS ================= */}
-            <div className="mt-7 pt-5 border-t border-slate-200">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                <p className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>1-Click Demonstration Personas</span>
-                </p>
+                <form onSubmit={handleStakeholderRegister} className="space-y-3">
+                  <div>
+                    <label htmlFor="orgName" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      Organization / Corporate Name *
+                    </label>
+                    <div className="relative group">
+                      <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
+                      <input
+                        id="orgName"
+                        name="orgName"
+                        type="text"
+                        required
+                        value={orgName}
+                        onChange={(e) => setOrgName(e.target.value)}
+                        placeholder="e.g. Infosys Campus Screening Desk"
+                        className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
+                      />
+                    </div>
+                  </div>
 
-                {/* Filter Pills */}
-                <div className="flex flex-wrap items-center gap-1">
-                  {(
-                    [
-                      { id: 'all', label: 'All' },
-                      { id: 'operators', label: 'Operators' },
-                      { id: 'aicte', label: 'AICTE' },
-                      { id: 'students', label: 'Students' },
-                      { id: 'stakeholders', label: 'Stakeholders' },
-                      { id: 'admins', label: 'Admins' },
-                    ] as const
-                  ).map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setSelectedFilter(tab.id)}
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors ${
-                        selectedFilter === tab.id
-                          ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/70'
-                      }`}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="orgType" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Entity Type *
+                      </label>
+                      <select
+                        id="orgType"
+                        name="orgType"
+                        value={orgType}
+                        onChange={(e) => setOrgType(e.target.value)}
+                        className="w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 transition-all"
+                      >
+                        <option value="CORPORATE_EMPLOYER">Corporate Employer / IT</option>
+                        <option value="GOVERNMENT_EXAM_BODY">Government Exam Agency</option>
+                        <option value="VERIFICATION_AGENCY">Background Screening Desk</option>
+                        <option value="FINANCIAL_INSTITUTION">Bank / Student Loan Entity</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="contactPerson" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Contact Person *
+                      </label>
+                      <input
+                        id="contactPerson"
+                        name="contactPerson"
+                        type="text"
+                        required
+                        value={contactPerson}
+                        onChange={(e) => setContactPerson(e.target.value)}
+                        placeholder="e.g. Rajesh Nair (VP HR)"
+                        className="w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="contactEmail" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      Official Corporate Email *
+                    </label>
+                    <div className="relative group">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
+                      <input
+                        id="contactEmail"
+                        name="contactEmail"
+                        type="email"
+                        required
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
+                        placeholder="e.g. verification@infosys.com"
+                        className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="orgPurpose" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      Primary Verification Purpose *
+                    </label>
+                    <input
+                      id="orgPurpose"
+                      name="orgPurpose"
+                      type="text"
+                      required
+                      value={orgPurpose}
+                      onChange={(e) => setOrgPurpose(e.target.value)}
+                      placeholder="e.g. Campus Recruitment Academic Credential Verification"
+                      className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="orgPassword" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      Create Password *
+                    </label>
+                    <div className="relative group">
+                      <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
+                      <input
+                        id="orgPassword"
+                        name="orgPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={orgPassword}
+                        onChange={(e) => setOrgPassword(e.target.value)}
+                        placeholder="Create account password"
+                        className="w-full h-11 pl-10 pr-11 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 p-1"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-xs">
+                    <p className="font-semibold flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>One-Time AICTE Statutory Authorization</span>
+                    </p>
+                    <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                      Your registration will be queued for review in the AICTE Command Center. Once approved by AICTE HQ, credential verification queries will be unlocked.
+                    </p>
+                  </div>
+
+                  <div className="pt-1">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="lg"
+                      className="w-full !h-11 !rounded-xl !bg-gradient-to-r !from-indigo-600 !to-violet-600 hover:!from-indigo-700 hover:!to-violet-700 !text-white !font-semibold !shadow-md !shadow-indigo-200 transition-all"
+                      isLoading={isSubmitting}
                     >
-                      {tab.label}
-                    </button>
-                  ))}
+                      <span className="flex items-center justify-center gap-2">
+                        <span>Submit for AICTE Approval</span>
+                        {!isSubmitting && <ArrowRight className="w-4 h-4" />}
+                      </span>
+                    </Button>
+                  </div>
+                </form>
+
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('login')}
+                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                  >
+                    ← Already registered? Back to Sign In
+                  </button>
                 </div>
               </div>
-
-              {/* Persona Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[260px] overflow-y-auto pr-1">
-                {filteredPersonas.map((persona) => {
-                  const isLoadingThis = isSubmitting && activePersonaEmail === persona.email;
-                  const Icon = persona.icon;
-                  return (
-                    <button
-                      key={persona.displayName}
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => handle1ClickLogin(persona)}
-                      className={`group relative text-left p-2.5 rounded-xl bg-white border border-slate-200 ${persona.theme.borderHover} ${persona.theme.bgHover} hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 flex items-start gap-2.5 disabled:opacity-60`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg ${persona.theme.iconBg} flex items-center justify-center shrink-0 mt-0.5`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
-                            {persona.displayName}
-                          </h4>
-                          {isLoadingThis ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600 shrink-0 ml-1" />
-                          ) : (
-                            <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
-                          )}
-                        </div>
-                        <p className="text-[10px] text-slate-500 truncate mt-0.5">
-                          {persona.institutionName}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <p className="text-center text-[10px] text-slate-400 mt-2">
-                Click any persona card above for instant 1-click evaluation access.
-              </p>
-            </div>
+            )}
 
             {/* ================= PUBLIC VERIFICATION PORTAL ================= */}
-            <div className="mt-5 p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-center justify-between gap-3">
+            <div className="mt-5 p-3 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-bold text-slate-800">Public Credential Verification</p>
                 <p className="text-[11px] text-slate-500">Verify degrees & diplomas with QR code or APAAR ID</p>
@@ -591,7 +1049,7 @@ export const Login: React.FC = () => {
             </div>
 
             {/* Security Footer */}
-            <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-slate-400">
+            <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-slate-400">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
               <span>National Academic Integrity & Statutory Oversight Architecture</span>
             </div>

@@ -15,6 +15,7 @@ export interface User {
   phone_number?: string | null;
   is_active?: boolean;
   created_at?: string;
+  apaar_id?: string;
 }
 
 export interface Institution {

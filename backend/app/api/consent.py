@@ -190,6 +190,7 @@ async def list_stakeholders(
 async def toggle_stakeholder_approval(
     stakeholder_id: str,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """AICTE Administrator approves or suspends an external stakeholder registration."""
     stk = next((s for s in STAKEHOLDERS if s["id"] == stakeholder_id), None)
@@ -199,9 +200,19 @@ async def toggle_stakeholder_approval(
     if stk["registration_status"] == "approved":
         stk["registration_status"] = "pending_approval"
         stk["approved_by"] = None
+        new_status = "pending_approval"
     else:
         stk["registration_status"] = "approved"
         stk["approved_by"] = current_user.full_name or "AICTE Admin"
+        new_status = "approved"
+
+    # Synchronize the corresponding User account status in the database
+    contact_email = stk.get("contact_email", "").strip().lower()
+    if contact_email:
+        user = db.query(User).filter(User.email.ilike(contact_email)).first()
+        if user:
+            user.status = "active" if new_status == "approved" else "pending_approval"
+            db.commit()
 
     return {"message": "Stakeholder status updated successfully", "stakeholder": stk}
 

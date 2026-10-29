@@ -13,6 +13,7 @@ export interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  registerStudent: (data: { apaar_id: string; email: string; password: string; full_name?: string }) => Promise<boolean>;
   logout: () => Promise<void>;
   isAICTEAdmin: () => boolean;
   isInstitutionOperator: () => boolean;
@@ -66,6 +67,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     fetchUser();
   }, [token]);
+
+  const registerStudent = useCallback(async (data: { apaar_id: string; email: string; password: string; full_name?: string }): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const res = await authApi.registerStudent(data);
+      const authToken = res.access_token;
+      const loggedUser = res.user;
+
+      localStorage.setItem('apaar_token', authToken);
+      localStorage.setItem('apaar_user', JSON.stringify(loggedUser));
+      setToken(authToken);
+      setUser(loggedUser);
+      toast.success(`Registration approved! Welcome, ${loggedUser.full_name || 'Student'}!`);
+      return true;
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || err.response?.data?.message || 'Student registration failed.';
+      toast.error(msg);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
@@ -145,6 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoading,
       isAuthenticated,
       login,
+      registerStudent,
       logout,
       isAICTEAdmin,
       isInstitutionOperator,

@@ -135,6 +135,28 @@ export const authApi = {
     const response = await apiClient.post<{ access_token: string }>('/auth/refresh');
     return response.data;
   },
+
+  registerStudent: async (data: {
+    apaar_id: string;
+    email: string;
+    password: string;
+    full_name?: string;
+  }): Promise<{ access_token: string; token_type: string; user: User }> => {
+    const response = await apiClient.post('/auth/register-student', data);
+    return response.data;
+  },
+
+  registerStakeholder: async (data: {
+    organization_name: string;
+    entity_type: string;
+    contact_email: string;
+    contact_person: string;
+    purpose: string;
+    password: string;
+  }): Promise<{ status: string; message: string; registration_status: string }> => {
+    const response = await apiClient.post('/auth/register-stakeholder', data);
+    return response.data;
+  },
 };
 
 // ============================================================

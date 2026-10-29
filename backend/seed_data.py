@@ -21,6 +21,113 @@ from app.services.validation import validate_and_persist
 from app.services.audit import log_event
 
 
+def ensure_demo_users(db: Session):
+    """
+    Ensure all demonstration personas (AICTE, Colleges, Students, Stakeholders)
+    exist with status='active', valid roles, and Demo@1234 credentials.
+    """
+    pw_hash = hash_password("Demo@1234")
+
+    # Fetch institution IDs by code for role mapping
+    inst_map = {
+        inst.institution_code: inst.id
+        for inst in db.query(Institution).all()
+    }
+
+    demo_accounts = [
+        {
+            "email": "admin@aicte.gov.in",
+            "full_name": "Dr. Rajiv Kumar (AICTE Admin)",
+            "roles": [("aicte_admin", None), ("reviewer", None)],
+        },
+        {
+            "email": "reviewer@aicte.gov.in",
+            "full_name": "Pooja Sharma (Compliance Reviewer)",
+            "roles": [("reviewer", None)],
+        },
+        {
+            "email": "operator@dsce.edu.in",
+            "full_name": "Naveen Gowda (DSCE Operator)",
+            "roles": [("institution_operator", inst_map.get("DSCE-BLR"))],
+        },
+        {
+            "email": "admin@dsce.edu.in",
+            "full_name": "Dr. C. P. S. Prakash (Principal / DSCE Admin)",
+            "roles": [("institution_admin", inst_map.get("DSCE-BLR"))],
+        },
+        {
+            "email": "operator@iit-demo.edu",
+            "full_name": "Anil Verma (IIT Operator)",
+            "roles": [("institution_operator", inst_map.get("IIT-DEMO"))],
+        },
+        {
+            "email": "admin@iit-demo.edu",
+            "full_name": "Prof. S. R. Raman (IIT Dean / Admin)",
+            "roles": [("institution_admin", inst_map.get("IIT-DEMO"))],
+        },
+        {
+            "email": "operator@nit-demo.edu",
+            "full_name": "Suresh Nair (NIT Operator)",
+            "roles": [("institution_operator", inst_map.get("NIT-DEMO"))],
+        },
+        {
+            "email": "operator@dec-demo.edu",
+            "full_name": "Kavita Patil (DEC Pune Operator)",
+            "roles": [("institution_operator", inst_map.get("DEC-DEMO"))],
+        },
+        {
+            "email": "student@dsce.edu.in",
+            "full_name": "Aarav Sharma (Candidate / Student)",
+            "roles": [("student", inst_map.get("DSCE-BLR"))],
+        },
+        {
+            "email": "nta.verifier@nta.ac.in",
+            "full_name": "National Testing Agency (NTA Verifier)",
+            "roles": [("stakeholder", None), ("verifier", None)],
+        },
+        {
+            "email": "tcs.verify@tcs.com",
+            "full_name": "TCS TalentDesk Verification Officer",
+            "roles": [("stakeholder", None), ("verifier", None)],
+        },
+        {
+            "email": "verifier@demo.gov.in",
+            "full_name": "Vikramaditya Sen (Corporate / Public Verifier)",
+            "roles": [("verifier", None)],
+        },
+    ]
+
+    for acc in demo_accounts:
+        user = db.query(User).filter(User.email == acc["email"]).first()
+        if not user:
+            user = User(
+                id=uuid.uuid4(),
+                email=acc["email"],
+                password_hash=pw_hash,
+                full_name=acc["full_name"],
+                status="active",
+            )
+            db.add(user)
+            db.flush()
+        else:
+            user.status = "active"
+            user.password_hash = pw_hash
+
+        # Sync roles
+        existing_roles = {r.role for r in user.roles}
+        for role_name, inst_id in acc["roles"]:
+            if role_name not in existing_roles:
+                new_role = UserRole(
+                    id=uuid.uuid4(),
+                    user_id=user.id,
+                    role=role_name,
+                    institution_id=inst_id,
+                )
+                db.add(new_role)
+
+    db.commit()
+
+
 def seed():
     print("Creating tables if they don't exist...")
     Base.metadata.create_all(bind=engine)
@@ -29,7 +136,8 @@ def seed():
     try:
         # Check if already seeded
         if db.query(User).filter(User.email == "admin@aicte.gov.in").first():
-            print("Database already contains seed data. Skipping seed.")
+            print("Database already contains seed data. Ensuring all demo personas exist...")
+            ensure_demo_users(db)
             return
 
         print("Seeding Institutions...")
@@ -226,102 +334,8 @@ def seed():
         db.add_all([intake_iit_cs, intake_iit_ee, intake_nit_cs, intake_dsce_cs, intake_dsce_ai])
         db.flush()
 
-        print("Seeding Users & Roles...")
-        pw_hash = hash_password("Demo@1234")
-
-        # 1. AICTE Admin
-        user_admin = User(
-            id=uuid.uuid4(),
-            email="admin@aicte.gov.in",
-            password_hash=pw_hash,
-            full_name="Dr. Rajiv Kumar (AICTE Admin)",
-            status="active",
-        )
-        # 2. IIT Operator
-        user_iit_op = User(
-            id=uuid.uuid4(),
-            email="operator@iit-demo.edu",
-            password_hash=pw_hash,
-            full_name="Anil Verma (IIT Operator)",
-            status="active",
-        )
-        # 3. IIT Admin / Dean
-        user_iit_admin = User(
-            id=uuid.uuid4(),
-            email="admin@iit-demo.edu",
-            password_hash=pw_hash,
-            full_name="Prof. S. R. Raman (IIT Dean / Admin)",
-            status="active",
-        )
-        # 4. NIT Operator
-        user_nit_op = User(
-            id=uuid.uuid4(),
-            email="operator@nit-demo.edu",
-            password_hash=pw_hash,
-            full_name="Suresh Nair (NIT Operator)",
-            status="active",
-        )
-        # 5. DSCE Operator
-        user_dsce_op = User(
-            id=uuid.uuid4(),
-            email="operator@dsce.edu.in",
-            password_hash=pw_hash,
-            full_name="Naveen Gowda (DSCE Operator)",
-            status="active",
-        )
-        # 6. DSCE Admin / Principal
-        user_dsce_admin = User(
-            id=uuid.uuid4(),
-            email="admin@dsce.edu.in",
-            password_hash=pw_hash,
-            full_name="Dr. C. P. S. Prakash (Principal / DSCE Admin)",
-            status="active",
-        )
-        # 7. DEC Operator
-        user_dec_op = User(
-            id=uuid.uuid4(),
-            email="operator@dec-demo.edu",
-            password_hash=pw_hash,
-            full_name="Kavita Patil (DEC Pune Operator)",
-            status="active",
-        )
-        # 8. AICTE Compliance Reviewer
-        user_reviewer = User(
-            id=uuid.uuid4(),
-            email="reviewer@aicte.gov.in",
-            password_hash=pw_hash,
-            full_name="Pooja Sharma (Compliance Reviewer)",
-            status="active",
-        )
-        # 9. Corporate / Public Verifier
-        user_verifier = User(
-            id=uuid.uuid4(),
-            email="verifier@demo.gov.in",
-            password_hash=pw_hash,
-            full_name="Vikramaditya Sen (Corporate / Public Verifier)",
-            status="active",
-        )
-        db.add_all([
-            user_admin, user_iit_op, user_iit_admin, user_nit_op,
-            user_dsce_op, user_dsce_admin, user_dec_op, user_reviewer, user_verifier
-        ])
-        db.flush()
-
-        # Roles
-        roles = [
-            UserRole(id=uuid.uuid4(), user_id=user_admin.id, role="aicte_admin"),
-            UserRole(id=uuid.uuid4(), user_id=user_admin.id, role="reviewer"),
-            UserRole(id=uuid.uuid4(), user_id=user_iit_op.id, role="institution_operator", institution_id=inst1.id),
-            UserRole(id=uuid.uuid4(), user_id=user_iit_admin.id, role="institution_admin", institution_id=inst1.id),
-            UserRole(id=uuid.uuid4(), user_id=user_nit_op.id, role="institution_operator", institution_id=inst2.id),
-            UserRole(id=uuid.uuid4(), user_id=user_dsce_op.id, role="institution_operator", institution_id=inst4.id),
-            UserRole(id=uuid.uuid4(), user_id=user_dsce_admin.id, role="institution_admin", institution_id=inst4.id),
-            UserRole(id=uuid.uuid4(), user_id=user_dec_op.id, role="institution_operator", institution_id=inst3.id),
-            UserRole(id=uuid.uuid4(), user_id=user_reviewer.id, role="reviewer"),
-            UserRole(id=uuid.uuid4(), user_id=user_verifier.id, role="verifier"),
-        ]
-        db.add_all(roles)
-        db.flush()
+        print("Seeding Users & Roles (including Students & Stakeholders)...")
+        ensure_demo_users(db)
 
         print("Seeding Student Records with deliberate anomalies...")
 

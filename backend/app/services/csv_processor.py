@@ -35,7 +35,7 @@ VALID_CATEGORIES = {
 VALID_STATUSES = {"admitted", "provisional", "cancelled", "migrated"}
 VALID_YES_NO = {"applicable", "not_applicable"}
 VALID_SUPERNUMERARY = {"none", "nri", "foreign_national", "kashmiri_migrant", "other"}
-DEMO_IDENTIFIER_PATTERN = re.compile(r"^DEMO-[A-Z0-9_-]{4,25}$|^[0-9]{12}$")
+DEMO_IDENTIFIER_PATTERN = re.compile(r"^DEMO-[A-Z0-9_-]{4,25}$|^[0-9]{12}$|^[0-9]{4}-[0-9]{4}-[0-9]{4}$")
 
 
 def sanitize_formula_injection(val: Any) -> str:

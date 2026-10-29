@@ -1,0 +1,11 @@
+institution_student_id,student_name,date_of_birth,gender,identity_reference,program_code,admission_cycle,admission_category,admission_status,nri_category,oci_status,foreign_national_status,supernumerary_category
+DSCE-2026-CY-0101,Tanvi Rajesh,2005-08-14,female,9123-4567-8901,DSCE-BLR-CY-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+DSCE-2026-CY-0102,Karthik Subramanian,2005-03-22,male,9234-5678-9012,DSCE-BLR-CY-2026,2026-27,obc,admitted,not_applicable,not_applicable,not_applicable,none
+DSCE-2026-CY-0103,Sneha Kulkarni,2005-11-09,female,9345-6789-0123,DSCE-BLR-CY-2026,2026-27,ews,admitted,not_applicable,not_applicable,not_applicable,none
+DSCE-2026-CY-0104,Naveen Kumar Swamy,2004-12-19,male,9456-7890-1234,DSCE-BLR-CY-2026,2026-27,sc,admitted,not_applicable,not_applicable,not_applicable,none
+DSCE-2026-CY-0105,Prateeksha Nayak,2005-06-03,female,9567-8901-2345,DSCE-BLR-CY-2026,2026-27,st,admitted,not_applicable,not_applicable,not_applicable,none
+DSCE-2026-CS-0201,Aditya Vikram Rao,2005-04-18,male,9678-9012-3456,DSCE-BLR-CS-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+DSCE-2026-CS-0202,Rhea Jennifer Dsouza,2005-09-25,female,9789-0123-4567,DSCE-BLR-CS-2026,2026-27,nri,admitted,applicable,not_applicable,not_applicable,nri
+DSCE-2026-AI-0301,Manoj B. Gowda,2005-02-11,male,9890-1234-5678,DSCE-BLR-AI-2026,2026-27,obc,admitted,not_applicable,not_applicable,not_applicable,none
+DSCE-2026-AI-0302,Ananya S. Hegde,2005-10-30,female,9901-2345-6789,DSCE-BLR-AI-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none
+DSCE-2026-CY-0106,Rohan V. Deshmukh,2005-07-21,male,9012-3456-7890,DSCE-BLR-CY-2026,2026-27,general,admitted,not_applicable,not_applicable,not_applicable,none

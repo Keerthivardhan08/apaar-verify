@@ -59,14 +59,11 @@ export function DataTable<T>({
     }
   };
 
-  if (isError) {
-    return <ErrorState message={errorMessage} onRetry={onRetry} />;
-  }
-
-  // Sorted data if sortable clicked locally
+  // Sorted data if sortable clicked locally (MUST be called unconditionally before any early returns)
+  const safeData = data || [];
   const sortedData = React.useMemo(() => {
-    if (!sortKey) return data;
-    return [...data].sort((a: any, b: any) => {
+    if (!sortKey) return safeData;
+    return [...safeData].sort((a: any, b: any) => {
       const aVal = a[sortKey];
       const bVal = b[sortKey];
       if (aVal === bVal) return 0;
@@ -80,7 +77,11 @@ export function DataTable<T>({
 
       return sortOrder === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
     });
-  }, [data, sortKey, sortOrder]);
+  }, [safeData, sortKey, sortOrder]);
+
+  if (isError) {
+    return <ErrorState message={errorMessage} onRetry={onRetry} />;
+  }
 
   return (
     <div className={`overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-xs ${className}`}>

@@ -333,11 +333,34 @@ export const studentApi = {
   },
 
   getCorrections: async (params?: { institution_id?: string; status?: string }): Promise<CorrectionRequest[]> => {
-    const response = await apiClient.get<CorrectionRequest[] | PaginatedResponse<CorrectionRequest>>('/corrections', { params });
-    if (Array.isArray(response.data)) {
-      return response.data;
+    try {
+      const response = await apiClient.get<any>('/corrections', { params });
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      return response.data?.items || [];
+    } catch {
+      try {
+        const wfRes = await apiClient.get<any>('/corrections-workflow', { params });
+        const items = Array.isArray(wfRes.data) ? wfRes.data : wfRes.data?.items || [];
+        return items.map((w: any) => ({
+          id: w.id,
+          record_id: w.record_id,
+          institution_id: w.institution_id,
+          status: w.workflow_status === 'approved' ? 'approved' : w.workflow_status === 'rejected' ? 'rejected' : 'pending',
+          field_name: w.field_name,
+          original_value: w.original_value || '',
+          proposed_value: w.proposed_value || '',
+          justification: w.operator_notes || 'Attribute correction under regulatory workflow.',
+          requested_by: 'Operator',
+          created_at: w.created_at,
+          student_name: w.student_name || 'Enrolled Student',
+          institution_student_id: w.institution_student_id || '',
+        }));
+      } catch {
+        return [];
+      }
     }
-    return response.data?.items || [];
   },
 };
 

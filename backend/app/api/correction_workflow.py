@@ -363,3 +363,41 @@ def list_correction_workflows(
         }
         for w in workflows
     ]
+
+
+corrections_alias_router = APIRouter(prefix="/corrections", tags=["Corrections Alias"])
+
+@corrections_alias_router.get("", summary="List Corrections for Institution")
+def list_corrections_alias(
+    institution_id: Optional[uuid.UUID] = None,
+    status: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    query = db.query(ExpandedCorrectionWorkflow)
+    if institution_id:
+        require_institution_access(institution_id, current_user)
+        query = query.filter(ExpandedCorrectionWorkflow.institution_id == institution_id)
+    if status:
+        query = query.filter(ExpandedCorrectionWorkflow.workflow_status == status)
+
+    workflows = query.order_by(ExpandedCorrectionWorkflow.created_at.desc()).limit(100).all()
+
+    results = []
+    for w in workflows:
+        student = db.query(StudentRecord).filter(StudentRecord.id == w.record_id).first()
+        results.append({
+            "id": str(w.id),
+            "record_id": str(w.record_id),
+            "institution_id": str(w.institution_id),
+            "status": "pending" if w.workflow_status in ["submitted", "under_review", "draft", "operator_draft", "inst_admin_approved"] else ("approved" if w.workflow_status in ["approved", "completed", "aicte_verified"] else "rejected"),
+            "field_name": w.field_name,
+            "original_value": w.original_value or "",
+            "proposed_value": w.proposed_value or "",
+            "justification": w.operator_notes or w.inst_admin_notes or "Record attribute correction under statutory review.",
+            "requested_by": "Institution Operator",
+            "created_at": w.created_at.isoformat(),
+            "student_name": student.student_name if student else "Enrolled Student",
+            "institution_student_id": student.institution_student_id if student else "",
+        })
+    return results

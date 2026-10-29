@@ -118,6 +118,7 @@ app.include_router(institutional_api.router, prefix=PREFIX, tags=["Institutional
 app.include_router(reference_data.router, prefix=PREFIX, tags=["Authoritative Reference Data & Reconciliation"])
 app.include_router(freshness.router, prefix=PREFIX, tags=["Source Freshness & SLA Monitoring"])
 app.include_router(correction_workflow.router, prefix=PREFIX, tags=["Expanded Correction Reconciliation"])
+app.include_router(correction_workflow.corrections_alias_router, prefix=PREFIX, tags=["Corrections Alias"])
 app.include_router(zk_exchange.router, prefix=PREFIX, tags=["Zero-Knowledge & Blinded Privacy Exchange"])
 app.include_router(analytics_v2.router, prefix=PREFIX, tags=["Integrity Analytics & Risk Scoring"])
 app.include_router(ocr.router, prefix=PREFIX, tags=["OCR Document Reconciliation"])

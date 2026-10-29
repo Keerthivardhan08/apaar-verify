@@ -16,6 +16,9 @@ import {
   Clock,
   Briefcase,
   Users,
+  Shield,
+  Sparkles,
+  Check,
 } from 'lucide-react';
 import { consentApi } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -89,121 +92,137 @@ export const StakeholderApprovals: React.FC = () => {
   const pendingCount = stakeholders.filter((s) => s.registration_status === 'pending_approval').length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
-                Stakeholder Governance & Authorization Desk
-              </h1>
-              <p className="text-sm text-slate-400">
-                AICTE Regulatory Access Control for External Verification Agencies, Examination Bodies, & Corporates
-              </p>
-            </div>
-          </div>
-        </div>
+    <div className="space-y-6 max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4">
+      {/* Executive Command Hero Banner */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 border border-indigo-500/40 p-6 sm:p-8 text-white shadow-xl">
+        {/* Ambient Glow Orbs */}
+        <div className="absolute -top-24 -right-24 w-80 h-80 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={fetchStakeholders}
-            disabled={loading}
-            className="flex items-center space-x-2 px-3 py-2 text-xs font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition border border-slate-700 disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Sync Registry</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Mandatory Privacy & Student Consent Directive Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/80 via-slate-900 to-indigo-900/60 p-5 shadow-xl">
-        <div className="flex items-start space-x-4">
-          <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
-            <Lock className="w-5 h-5" />
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center space-x-2">
-              <span className="text-xs uppercase font-extrabold tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                MoE / AICTE Privacy Architecture
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2.5">
+              <span className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-xs font-mono font-bold tracking-wider uppercase">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                <span>AICTE Zero-Trust Access Protocol • Enforced</span>
               </span>
-              <span className="text-xs text-indigo-300 font-semibold">
-                Strict Zero-Trust Credential Scoping
-              </span>
+              <span className="text-xs text-slate-400 font-mono hidden sm:inline">IST Realtime Registry</span>
             </div>
-            <h3 className="text-sm font-bold text-white">
-              Default Access Restricted Solely to Parent Institution & AICTE
-            </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Approved stakeholders (e.g. NTA, TCS, Infosys) are <span className="text-amber-200 font-semibold">NOT permitted</span> to access or view any student’s academic records or APAAR transcripts without the student’s <span className="text-emerald-300 font-semibold">explicit prior digital authorization</span>. Whenever an external agency queries an APAAR ID, the platform verifies whether the applicant has granted consent. If not granted, access remains locked.
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+              <span>Stakeholder Governance & Authorization Desk</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+              Regulatory access control for third-party verification agencies (NTA, recruitments, screening agencies). External entities can access candidate records <span className="text-emerald-300 font-bold">ONLY AFTER explicit student consent</span> from their APAAR Student Portal.
             </p>
           </div>
+
+          <div className="flex items-center space-x-3 shrink-0">
+            <button
+              onClick={fetchStakeholders}
+              disabled={loading}
+              className="flex items-center space-x-2 px-4 py-2.5 text-xs font-extrabold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition border border-indigo-400/40 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>Sync Registry</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Mandatory Student Consent Directive Pill */}
+        <div className="relative mt-5 pt-4 border-t border-slate-800/80 flex items-start gap-3 text-xs text-slate-300">
+          <div className="w-5 h-5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center shrink-0 mt-0.5">
+            <Lock className="w-3.5 h-3.5" />
+          </div>
+          <div>
+            <span className="text-amber-200 font-bold uppercase tracking-wider text-[11px] mr-1.5">Zero-Trust Scoping Rule:</span>
+            No third-party stakeholder may view student academic credentials without prior student-approved verification authorization. Queries without consent are permanently blocked.
+          </div>
         </div>
       </div>
 
-      {/* KPI Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+      {/* KPI Stats — High-Contrast Solid Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Registered */}
+        <div className="bg-white rounded-2xl border-2 border-slate-200/90 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
           <div>
-            <div className="text-xs font-semibold text-slate-400">Total Registered</div>
-            <div className="text-2xl font-bold text-white mt-1">{totalCount} Entities</div>
+            <div className="text-[11px] font-black uppercase tracking-wider text-slate-500">Total Registered</div>
+            <div className="text-3xl font-black text-slate-900 mt-1 tracking-tight">
+              {totalCount} <span className="text-sm font-bold text-slate-500">Entities</span>
+            </div>
+            <div className="text-[11px] text-slate-500 font-medium mt-1">Verification agencies & employers</div>
           </div>
-          <Building2 className="w-8 h-8 text-indigo-400 opacity-80" />
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
+            <Building2 className="w-6 h-6" />
+          </div>
         </div>
 
-        <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-xl p-4 flex items-center justify-between">
+        {/* AICTE Approved */}
+        <div className="bg-white rounded-2xl border-2 border-emerald-300 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
           <div>
-            <div className="text-xs font-semibold text-emerald-400">AICTE Approved</div>
-            <div className="text-2xl font-bold text-emerald-300 mt-1">{approvedCount} Active</div>
+            <div className="text-[11px] font-black uppercase tracking-wider text-emerald-800">AICTE Approved</div>
+            <div className="text-3xl font-black text-emerald-950 mt-1 tracking-tight">
+              {approvedCount} <span className="text-sm font-bold text-emerald-700">Active</span>
+            </div>
+            <div className="text-[11px] text-emerald-700 font-medium mt-1">Authorized for consent requests</div>
           </div>
-          <CheckCircle2 className="w-8 h-8 text-emerald-400 opacity-80" />
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-700 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
         </div>
 
-        <div className="bg-amber-950/30 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between">
+        {/* Pending Review */}
+        <div className="bg-white rounded-2xl border-2 border-amber-300 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
           <div>
-            <div className="text-xs font-semibold text-amber-400">Pending Review</div>
-            <div className="text-2xl font-bold text-amber-300 mt-1">{pendingCount} Awaiting</div>
+            <div className="text-[11px] font-black uppercase tracking-wider text-amber-800">Pending Review</div>
+            <div className="text-3xl font-black text-amber-950 mt-1 tracking-tight">
+              {pendingCount} <span className="text-sm font-bold text-amber-700">Awaiting</span>
+            </div>
+            <div className="text-[11px] text-amber-700 font-medium mt-1">Pending AICTE vetting & clearance</div>
           </div>
-          <Clock className="w-8 h-8 text-amber-400 opacity-80" />
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-300 text-amber-700 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
+            <Clock className="w-6 h-6" />
+          </div>
         </div>
 
-        <div className="bg-blue-950/30 border border-blue-500/30 rounded-xl p-4 flex items-center justify-between">
+        {/* Consent Gated */}
+        <div className="bg-white rounded-2xl border-2 border-blue-300 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
           <div>
-            <div className="text-xs font-semibold text-blue-400">Consent Gated</div>
-            <div className="text-2xl font-bold text-blue-300 mt-1">100% Enforced</div>
+            <div className="text-[11px] font-black uppercase tracking-wider text-blue-800">Consent Gated</div>
+            <div className="text-3xl font-black text-blue-950 mt-1 tracking-tight">
+              100% <span className="text-sm font-bold text-blue-700">Enforced</span>
+            </div>
+            <div className="text-[11px] text-blue-700 font-medium mt-1">Zero-trust student approval lock</div>
           </div>
-          <Lock className="w-8 h-8 text-blue-400 opacity-80" />
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-300 text-blue-700 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
+            <Lock className="w-6 h-6" />
+          </div>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-700/60">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      {/* Filter and Search Bar — Clean Solid White Container */}
+      <div className="bg-white p-4 rounded-2xl border-2 border-slate-200/90 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div className="relative w-full sm:w-96">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search by stakeholder name, email or purpose..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white transition"
           />
         </div>
 
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-slate-400 shrink-0" />
-          <span className="text-xs text-slate-400">Filter:</span>
+        <div className="flex items-center space-x-2 w-full sm:w-auto overflow-x-auto">
+          <Filter className="w-4 h-4 text-slate-500 shrink-0" />
+          <span className="text-xs font-extrabold text-slate-600">Filter:</span>
           {(['all', 'approved', 'pending_approval'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setFilterStatus(tab)}
-              className={`text-xs font-semibold px-2.5 py-1 rounded-md transition ${
+              className={`text-xs font-extrabold px-3 py-1.5 rounded-xl transition ${
                 filterStatus === tab
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25 border border-indigo-500'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
               }`}
             >
               {tab === 'all'
@@ -216,8 +235,8 @@ export const StakeholderApprovals: React.FC = () => {
         </div>
       </div>
 
-      {/* Stakeholders Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Stakeholders Cards Grid — High Contrast Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {filteredStakeholders.map((s) => {
           const isApproved = s.registration_status === 'approved';
           const isUpdating = updatingId === s.id;
@@ -225,23 +244,23 @@ export const StakeholderApprovals: React.FC = () => {
           return (
             <div
               key={s.id}
-              className={`rounded-2xl border p-5 bg-slate-800/50 backdrop-blur-sm transition-all duration-200 flex flex-col justify-between ${
+              className={`rounded-2xl border-2 p-6 bg-white shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between ${
                 isApproved
-                  ? 'border-slate-700/80 hover:border-indigo-500/50'
-                  : 'border-amber-500/30 bg-amber-950/10'
+                  ? 'border-slate-200/90 hover:border-indigo-400'
+                  : 'border-amber-300 bg-amber-50/15'
               }`}
             >
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {/* Header row */}
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3.5">
                     <div
-                      className={`p-2.5 rounded-xl border ${
+                      className={`w-11 h-11 rounded-2xl flex items-center justify-center border shadow-inner ${
                         s.entity_type === 'GOVERNMENT_EXAM_BODY'
-                          ? 'bg-purple-950/50 border-purple-500/30 text-purple-400'
+                          ? 'bg-purple-50 border-purple-200 text-purple-700'
                           : s.entity_type === 'CORPORATE_EMPLOYER'
-                          ? 'bg-blue-950/50 border-blue-500/30 text-blue-400'
-                          : 'bg-emerald-950/50 border-emerald-500/30 text-emerald-400'
+                          ? 'bg-blue-50 border-blue-200 text-blue-700'
+                          : 'bg-emerald-50 border-emerald-200 text-emerald-700'
                       }`}
                     >
                       {s.entity_type === 'GOVERNMENT_EXAM_BODY' ? (
@@ -253,29 +272,29 @@ export const StakeholderApprovals: React.FC = () => {
                       )}
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-white leading-tight">
+                      <h3 className="text-base font-extrabold text-slate-900 leading-tight">
                         {s.name}
                       </h3>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
+                      <p className="text-xs text-indigo-700 font-mono mt-0.5 font-bold">
                         {s.contact_email}
                       </p>
                     </div>
                   </div>
 
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase border ${
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black tracking-wide uppercase shadow-sm ${
                       isApproved
-                        ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30'
-                        : 'bg-amber-950/60 text-amber-300 border-amber-500/30'
+                        ? 'bg-emerald-600 text-white shadow-emerald-600/20'
+                        : 'bg-amber-500 text-white shadow-amber-500/20'
                     }`}
                   >
-                    {isApproved ? 'AICTE Approved' : 'Pending Review'}
+                    {isApproved ? 'AICTE APPROVED' : 'PENDING REVIEW'}
                   </span>
                 </div>
 
                 {/* Purpose */}
-                <div className="text-xs text-slate-300 bg-slate-900/60 rounded-xl p-3 border border-slate-800">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                <div className="text-xs text-slate-700 bg-slate-50 rounded-xl p-3.5 border border-slate-200 leading-relaxed font-medium">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1">
                     Declared Verification Purpose
                   </span>
                   {s.purpose}
@@ -283,14 +302,14 @@ export const StakeholderApprovals: React.FC = () => {
 
                 {/* Permitted claims */}
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
                     Permitted Attribute Scopes (Zero-Trust Gated)
                   </span>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1.5">
                     {s.permitted_fields.map((field) => (
                       <span
                         key={field}
-                        className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-700/80 text-slate-300 font-mono"
+                        className="text-[11px] px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 font-mono font-bold"
                       >
                         {field}
                       </span>
@@ -299,36 +318,36 @@ export const StakeholderApprovals: React.FC = () => {
                 </div>
 
                 {/* Approval details */}
-                <div className="pt-2 text-[11px] text-slate-400 border-t border-slate-700/50 flex items-center justify-between">
-                  <span>Registered: {s.applied_date}</span>
+                <div className="pt-3 text-xs text-slate-500 border-t border-slate-100 flex items-center justify-between font-medium">
+                  <span>Registered: <strong className="text-slate-700">{s.applied_date}</strong></span>
                   {s.approved_by && (
-                    <span className="text-emerald-400 font-medium truncate max-w-[200px]">
-                      By: {s.approved_by}
+                    <span className="text-emerald-700 font-bold truncate max-w-[200px]">
+                      Approved by: {s.approved_by}
                     </span>
                   )}
                 </div>
               </div>
 
               {/* Action Button */}
-              <div className="mt-4 pt-3 border-t border-slate-700/50">
+              <div className="mt-5 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   disabled={isUpdating}
                   onClick={() => handleToggleApproval(s.id, s.registration_status)}
-                  className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 ${
+                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-black transition flex items-center justify-center space-x-2 shadow-sm ${
                     isApproved
-                      ? 'bg-slate-800 hover:bg-rose-950 text-slate-300 hover:text-rose-200 border border-slate-700 hover:border-rose-500/40'
-                      : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30'
+                      ? 'bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-slate-300 hover:border-rose-300'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25'
                   } disabled:opacity-50`}
                 >
                   {isApproved ? (
                     <>
-                      <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                      <XCircle className="w-4 h-4 text-rose-500" />
                       <span>Revoke / Suspend Authorization</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <CheckCircle2 className="w-4 h-4" />
                       <span>Grant AICTE Approval</span>
                     </>
                   )}

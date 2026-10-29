@@ -24,8 +24,9 @@ echo "[1/4] Installing backend dependencies..."
 cd backend
 python3 -m pip install -r requirements.txt --quiet
 
-echo "[2/4] Initializing database and synthetic seed records..."
+echo "[2/4] Initializing database, 58 AICTE Colleges, and synthetic student records..."
 python3 seed_data.py
+python3 seed_expanded_colleges.py
 
 echo "[3/4] Installing frontend dependencies & building bundle..."
 cd ../frontend

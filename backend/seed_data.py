@@ -487,6 +487,15 @@ def seed():
         db.commit()
         print("[SUCCESS] Seed completed successfully!")
 
+        # Automatically execute expanded seeding for 58 AICTE Colleges & 1,233+ DSCE students
+        try:
+            from seed_expanded_colleges import run_seed
+            print("[EXPANDED SEED] Auto-initializing 58 AICTE Colleges, all 13 branches, and 1,233+ student records...")
+            run_seed()
+            print("[EXPANDED SEED] Successfully completed full college & student initialization!")
+        except Exception as ee:
+            print(f"[EXPANDED SEED NOTE] {ee}")
+
     except Exception as e:
         db.rollback()
         print(f"[ERROR] Error during seed: {e}")

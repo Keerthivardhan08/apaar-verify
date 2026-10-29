@@ -68,10 +68,14 @@ async def lifespan(app: FastAPI):
         try:
             from app.database import SessionLocal
             from app.models.institution import Institution
+            from app.models.student import StudentRecord
             with SessionLocal() as db_session:
-                has_dsce = db_session.query(Institution).filter(Institution.institution_code == "DSCE-BLR").first()
-            if not has_dsce:
-                print("Cloud Deployment Detected: Auto-seeding 58 colleges, branches & DSCE student records...")
+                dsce_inst = db_session.query(Institution).filter(Institution.institution_code == "DSCE-BLR").first()
+                dsce_count = db_session.query(StudentRecord).filter(StudentRecord.institution_id == dsce_inst.id).count() if dsce_inst else 0
+            
+            # If DSCE has fewer than 1000 students (e.g. only 4 from basic seed, or fresh cloud deploy), seed the full 1,165+ students & 58 colleges
+            if dsce_count < 1000:
+                print(f"Cloud/Startup Seeding: DSCE has {dsce_count} students (< 1000). Auto-seeding full 1,165+ student enrollment across all 13 branches and 58 colleges...")
                 from seed_expanded_colleges import run_seed
                 run_seed()
         except Exception as e:

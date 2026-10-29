@@ -1092,14 +1092,16 @@ def run_seed():
                     StudentRecord.admission_cycle == "2026-27",
                 ).count()
 
-                # To ensure high database performance while maintaining high fidelity,
-                # seed representative sample students (e.g. 15-25 students per branch for newly added branches)
-                target_seed_students = min(target_enrolled, 25)
+                # For DSCE-BLR and key demo institutions, seed full realistic target enrollment (minimum 1,111+ students)
+                if code in ("DSCE-BLR", "DEC-DEMO", "NIT-DEMO", "IIT-DEMO"):
+                    target_seed_students = target_enrolled
+                else:
+                    target_seed_students = min(target_enrolled, 25)
                 needed_students = target_seed_students - current_students_count
                 
                 # If this is a deliberate breach scenario (e.g. IIT-DEMO CS or DSCE AI), ensure enrolled > approved
                 if target_enrolled > approved_cap:
-                    needed_students = target_enrolled - current_students_count
+                    needed_students = max(needed_students, target_enrolled - current_students_count)
 
                 if needed_students > 0:
                     for i in range(needed_students):

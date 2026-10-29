@@ -1,6 +1,10 @@
+import os
 from typing import List, Union
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_DEFAULT_DB_FILE = os.path.join(_BACKEND_DIR, "apaar.db").replace("\\", "/")
 
 
 class Settings(BaseSettings):
@@ -8,7 +12,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Database
-    DATABASE_URL: str = "sqlite:///./apaar.db"
+    DATABASE_URL: str = f"sqlite:///{_DEFAULT_DB_FILE}"
     
     # Security
     SECRET_KEY: str = "dev-secret-key-change-in-production"

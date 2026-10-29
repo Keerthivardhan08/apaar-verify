@@ -22,7 +22,7 @@ class ReviewDecisionRequest(BaseModel):
 
 
 class AssignReviewerRequest(BaseModel):
-    reviewer_id: uuid.UUID
+    reviewer_id: Optional[str] = None
 
 
 @router.get("/reviews")
@@ -210,6 +210,27 @@ def make_review_decision(
     }
 
 
+@router.get("/reviews/officers")
+def list_review_officers(
+    current_user: User = Depends(require_roles("aicte_admin", "reviewer")),
+    db: Session = Depends(get_db),
+):
+    """Returns AICTE regulatory desk officers available for case assignment."""
+    from app.models.user import UserRole
+    officers = db.query(User).join(UserRole).filter(
+        UserRole.role.in_(["aicte_admin", "reviewer"])
+    ).distinct().all()
+
+    return [
+        {
+            "id": str(u.id),
+            "full_name": u.full_name,
+            "email": u.email,
+        }
+        for u in officers
+    ]
+
+
 @router.post("/reviews/{issue_id}/assign")
 def assign_reviewer(
     issue_id: uuid.UUID,
@@ -221,12 +242,28 @@ def assign_reviewer(
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found.")
 
-    reviewer = db.query(User).filter(User.id == body.reviewer_id).first()
+    reviewer = None
+    if body.reviewer_id:
+        try:
+            req_uuid = uuid.UUID(body.reviewer_id)
+            reviewer = db.query(User).filter(User.id == req_uuid).first()
+        except Exception:
+            pass
+
+        if not reviewer:
+            reviewer = db.query(User).filter(
+                (User.email.ilike(f"%{body.reviewer_id}%")) | (User.full_name.ilike(f"%{body.reviewer_id}%"))
+            ).first()
+
     if not reviewer:
-        raise HTTPException(status_code=404, detail="Assignee user not found.")
+        reviewer = current_user
 
     issue.assigned_to = reviewer.id
     issue.status = "under_review"
     db.commit()
 
-    return {"message": "Reviewer assigned successfully.", "assigned_to": str(reviewer.id)}
+    return {
+        "message": f"Reviewer {reviewer.full_name} assigned successfully.",
+        "assigned_to": str(reviewer.id),
+        "reviewer_name": reviewer.full_name,
+    }

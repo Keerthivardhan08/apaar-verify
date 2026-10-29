@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 export const InstitutionLayout: React.FC = () => {
-  const { user, isLoading, isInstitutionOperator, isInstitutionAdmin, isAICTEAdmin } = useAuth();
+  const { user, isLoading, isInstitutionOperator, isInstitutionAdmin, isAICTEAdmin, isReviewer } = useAuth();
 
   if (isLoading) {
     return <LoadingSpinner fullScreen message="Authenticating session..." />;
@@ -14,8 +14,8 @@ export const InstitutionLayout: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // AICTE Admin or Institution users are allowed to access institution views
-  if (!isInstitutionOperator() && !isInstitutionAdmin() && !isAICTEAdmin()) {
+  // AICTE Admin, Reviewer, or Institution users are allowed to access institution views
+  if (!isInstitutionOperator() && !isInstitutionAdmin() && !isAICTEAdmin() && !isReviewer()) {
     return <Navigate to="/login" replace />;
   }
 

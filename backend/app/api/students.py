@@ -1,11 +1,12 @@
 import math
 import uuid
+import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, and_, func
 
 from app.database import get_db
 from app.core.permissions import (
@@ -241,21 +242,67 @@ def search_student_inspector(
 ):
     """
     Universal Student & APAAR inspector for AICTE and authorized portals.
-    Allows searching across all 29 colleges by Student Name, APAAR ID, or Roll Number.
+    Allows searching across all AICTE recognised colleges by Student Name, APAAR ID,
+    Roll Number, College Name, College Code, or Branch.
     """
     clean_q = query.strip()
-    records = db.query(StudentRecord).filter(
-        or_(
-            StudentRecord.student_name.ilike(f"%{clean_q}%"),
-            StudentRecord.identity_reference.ilike(f"%{clean_q}%"),
-            StudentRecord.institution_student_id.ilike(f"%{clean_q}%"),
+    if not clean_q:
+        return []
+
+    clean_alnum = re.sub(r'[\s\-]', '', clean_q)
+
+    search_clauses = [
+        StudentRecord.student_name.ilike(f"%{clean_q}%"),
+        StudentRecord.identity_reference.ilike(f"%{clean_q}%"),
+        StudentRecord.institution_student_id.ilike(f"%{clean_q}%"),
+        Institution.name.ilike(f"%{clean_q}%"),
+        Institution.institution_code.ilike(f"%{clean_q}%"),
+        Program.program_name.ilike(f"%{clean_q}%"),
+        Program.branch.ilike(f"%{clean_q}%"),
+    ]
+
+    if clean_alnum:
+        search_clauses.append(
+            func.replace(func.replace(StudentRecord.identity_reference, '-', ''), ' ', '').ilike(f"%{clean_alnum}%")
         )
-    ).limit(50).all()
+        search_clauses.append(
+            func.replace(StudentRecord.institution_student_id, '-', '').ilike(f"%{clean_alnum}%")
+        )
+
+    words = clean_q.split()
+    if len(words) > 1:
+        search_clauses.append(
+            and_(*[StudentRecord.student_name.ilike(f"%{w}%") for w in words])
+        )
+        # Cross-field word matching: each word can match either name, college, or branch (e.g. "IIT Bombay" or "Aarav DSCE")
+        cross_word_clauses = []
+        for w in words:
+            cross_word_clauses.append(
+                or_(
+                    StudentRecord.student_name.ilike(f"%{w}%"),
+                    StudentRecord.identity_reference.ilike(f"%{w}%"),
+                    StudentRecord.institution_student_id.ilike(f"%{w}%"),
+                    Institution.name.ilike(f"%{w}%"),
+                    Institution.institution_code.ilike(f"%{w}%"),
+                    Program.program_name.ilike(f"%{w}%"),
+                    Program.branch.ilike(f"%{w}%"),
+                )
+            )
+        search_clauses.append(and_(*cross_word_clauses))
+
+    records = (
+        db.query(StudentRecord)
+        .join(Institution, StudentRecord.institution_id == Institution.id, isouter=True)
+        .join(Program, StudentRecord.program_id == Program.id, isouter=True)
+        .filter(or_(*search_clauses))
+        .limit(50)
+        .all()
+    )
 
     results = []
     for r in records:
-        prog = db.query(Program).filter(Program.id == r.program_id).first()
-        inst = db.query(Institution).filter(Institution.id == r.institution_id).first()
+        prog = r.program or db.query(Program).filter(Program.id == r.program_id).first()
+        inst = r.institution or db.query(Institution).filter(Institution.id == r.institution_id).first()
         issues = db.query(ValidationIssue).filter(ValidationIssue.record_id == r.id).all()
         results.append({
             "id": str(r.id),
@@ -302,7 +349,15 @@ def get_student_academic_dossier_endpoint(
     grades, SGPA, cumulative CGPA, and DigiLocker / NAD / AICTE official verification seal.
     """
     clean_id = apaar_id.strip()
-    student = db.query(StudentRecord).filter(StudentRecord.identity_reference == clean_id).first()
+    clean_digits = re.sub(r'[\s\-]', '', clean_id)
+    student = db.query(StudentRecord).filter(
+        or_(
+            StudentRecord.identity_reference == clean_id,
+            func.replace(StudentRecord.identity_reference, '-', '') == clean_digits if clean_digits else False,
+        )
+    ).first()
+    if not student:
+        student = db.query(StudentRecord).filter(StudentRecord.student_name.ilike(f"%{clean_id}%")).first()
     if not student:
         student = db.query(StudentRecord).first()
 
@@ -400,7 +455,7 @@ def list_student_correction_requests(
             "id": str(w.id),
             "record_id": str(w.record_id),
             "student_name": stud.student_name if stud else "Aarav Sharma",
-            "apaar_id": stud.identity_reference if stud else "DEMO-APAAR-1001",
+            "apaar_id": stud.identity_reference if stud else "9876-5432-1011",
             "institution_name": inst.name if inst else "Dayananda Sagar College of Engineering",
             "field_name": w.field_name,
             "original_value": w.original_value,
@@ -535,9 +590,14 @@ def lookup_student_by_apaar(
     program information, open validation issues, and existing workflow status.
     """
     clean_id = apaar_id.strip()
+    clean_digits = re.sub(r'[\s\-]', '', clean_id)
 
     # Build search variants to handle user prefixes and demo conventions (e.g. 0001 -> 1001)
     search_ids = {clean_id, clean_id.upper()}
+    if clean_digits:
+        search_ids.add(clean_digits)
+        if len(clean_digits) == 12:
+            search_ids.add(f"{clean_digits[:4]}-{clean_digits[4:8]}-{clean_digits[8:]}")
     if "000" in clean_id:
         search_ids.add(clean_id.replace("000", "100"))
     if "100" in clean_id:

@@ -156,8 +156,8 @@ const DEMO_PERSONAS: DemoPersona[] = [
   {
     displayName: 'Student (Aarav Sharma)',
     category: 'students',
-    institutionName: 'APAAR ID: DEMO-APAAR-1001 (DSCE)',
-    email: 'DEMO-APAAR-1001',
+    institutionName: '12-Digit APAAR ID: 9876-5432-1011 (DSCE)',
+    email: '9876-5432-1011',
     password: 'Demo@1234',
     destination: '/student',
     icon: GraduationCap,
@@ -571,7 +571,7 @@ export const Login: React.FC = () => {
                         required
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
-                        placeholder="e.g. DEMO-APAAR-1001 or operator@dsce.edu.in"
+                        placeholder="e.g. 9876-5432-1011 or operator@dsce.edu.in"
                         className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
                       />
                     </div>
@@ -740,7 +740,7 @@ export const Login: React.FC = () => {
                       <label htmlFor="studentApaar" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
                         APAAR ID *
                       </label>
-                      <span className="text-[10px] text-indigo-600 font-semibold">Try: DEMO-APAAR-1001</span>
+                      <span className="text-[10px] text-indigo-600 font-semibold">Try: 9876-5432-1011</span>
                     </div>
                     <div className="relative group">
                       <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none" />
@@ -751,7 +751,7 @@ export const Login: React.FC = () => {
                         required
                         value={studentApaar}
                         onChange={(e) => setStudentApaar(e.target.value)}
-                        placeholder="e.g. DEMO-APAAR-1001 or 1234-5678-9012"
+                        placeholder="e.g. 9876-5432-1011 (12-Digit APAAR ID)"
                         className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 shadow-xs outline-none focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15 hover:border-slate-300 transition-all"
                       />
                     </div>

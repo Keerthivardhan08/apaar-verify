@@ -103,7 +103,7 @@ export const Upload: React.FC = () => {
     const sampleRow = [
       'Aarav Sharma',
       'IIT-CS-001',
-      'DEMO-APAAR-1001',
+      '9876-5432-1011',
       '2005-05-15',
       'male',
       'CS-UG-2026',

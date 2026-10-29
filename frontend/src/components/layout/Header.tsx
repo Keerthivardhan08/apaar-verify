@@ -6,16 +6,19 @@ import { Link } from 'react-router-dom';
 import Badge from '../ui/Badge';
 
 export const Header: React.FC = () => {
-  const { user, logout, isAICTEAdmin, isInstitutionAdmin, isInstitutionOperator } = useAuth();
+  const { user, logout, isAICTEAdmin, isReviewer, isInstitutionAdmin, isInstitutionOperator } = useAuth();
   const { data: notifications = [] } = useNotifications();
   const markRead = useMarkNotificationRead();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
+  const isAicteStaff = isAICTEAdmin() || isReviewer();
 
   const roleLabel = isAICTEAdmin()
     ? 'AICTE National Admin'
+    : isReviewer()
+    ? 'AICTE Compliance Reviewer'
     : isInstitutionAdmin()
     ? 'Institution Admin'
     : isInstitutionOperator()
@@ -28,7 +31,7 @@ export const Header: React.FC = () => {
         {/* Left: Organization / Workspace indicator */}
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
-            {isAICTEAdmin() ? (
+            {isAicteStaff ? (
               <span className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-indigo-800 bg-indigo-50/80 border border-indigo-200/60 px-3 py-1 rounded-xl shadow-xs">
                 <Shield className="w-3.5 h-3.5 text-indigo-600" />
                 <span>AICTE Central Command</span>
@@ -44,14 +47,16 @@ export const Header: React.FC = () => {
 
         {/* Right: Actions, Notifications & Profile */}
         <div className="flex items-center space-x-3 sm:space-x-4">
-          {/* Public Verification Link */}
-          <Link
-            to="/verify"
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-white/70 hover:bg-white px-3 py-1.5 rounded-xl border border-indigo-200/80 shadow-xs transition-all duration-200"
-          >
-            <QrCode className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Public Verifier</span>
-          </Link>
+          {/* Public Verification Link (Institutional Portal only) */}
+          {!isAicteStaff && (
+            <Link
+              to="/verify"
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-white/70 hover:bg-white px-3 py-1.5 rounded-xl border border-indigo-200/80 shadow-xs transition-all duration-200"
+            >
+              <QrCode className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Public Verifier</span>
+            </Link>
+          )}
 
           {/* Notifications Dropdown */}
           <div className="relative">

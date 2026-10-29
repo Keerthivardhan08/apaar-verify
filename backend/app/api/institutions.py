@@ -1,6 +1,9 @@
+import json
 import uuid
+from datetime import datetime, date
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -74,6 +77,163 @@ def get_institutions(
         result.append(out)
 
     return result
+
+
+class MemberCollegeCreateRequest(BaseModel):
+    name: str
+    institution_code: str
+    institution_type: str = "STATE_UNIVERSITY"  # CENTRAL_INSTITUTE, STATE_UNIVERSITY, PRIVATE_COLLEGE, AUTONOMOUS_COLLEGE
+    state: str
+    city: str
+    naac_grade: Optional[str] = "A+"
+    naac_cgpa: Optional[str] = "3.55"
+    nba_tier: Optional[str] = "Tier-1"
+    nba_status: Optional[str] = "Accredited"
+    eoa_reference: Optional[str] = None
+    default_capacity: Optional[int] = 120
+    branches: Optional[List[str]] = None
+
+
+@router.post("/institutions", response_model=InstitutionOut, status_code=status.HTTP_201_CREATED)
+def create_member_college(
+    req: MemberCollegeCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    AICTE Central Command endpoint to register a new AICTE Member College.
+    Creates institution, accreditation portfolio, approved engineering branches and intake quotas.
+    """
+    roles = get_user_roles(current_user)
+    if "aicte_admin" not in roles and "reviewer" not in roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only AICTE Administrators are authorized to register new member colleges.",
+        )
+
+    code = req.institution_code.strip().upper()
+    existing = db.query(Institution).filter(Institution.institution_code == code).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"An AICTE institution with code '{code}' already exists.",
+        )
+
+    new_inst = Institution(
+        id=uuid.uuid4(),
+        institution_code=code,
+        name=req.name.strip(),
+        institution_type=req.institution_type,
+        state=req.state.strip(),
+        city=req.city.strip(),
+        status="active",
+    )
+    db.add(new_inst)
+    db.flush()
+
+    eoa_ref = req.eoa_reference.strip() if req.eoa_reference else f"AICTE/EOA/2026-27/{code}-001"
+
+    # Create Institution Portfolio
+    portfolio = InstitutionPortfolio(
+        id=uuid.uuid4(),
+        institution_id=new_inst.id,
+        nba_tier=req.nba_tier or "Tier-1",
+        nba_status=req.nba_status or "Accredited",
+        nba_accredited_branches="All Approved Engineering Programs",
+        nba_valid_until="2028-06-30",
+        nba_file_ref=f"NBA/{code}/2024/001",
+        naac_grade=req.naac_grade or "A+",
+        naac_cgpa=req.naac_cgpa or "3.55",
+        naac_cycle="Cycle 2",
+        naac_valid_until="2028-12-31",
+        complaints_total=0,
+        complaints_resolved=0,
+        complaints_pending=0,
+        complaints_summary="Newly registered AICTE Member College; zero pending grievances.",
+        eoa_reference=eoa_ref,
+        new_intake_applied=req.default_capacity or 120,
+        new_intake_branch="B.Tech Computer Science & Engineering",
+        new_intake_status="Approved",
+        new_intake_remarks="Approved by AICTE Central Scrutiny Committee upon registration.",
+        seat_division_json=json.dumps({
+            "general": 40.5,
+            "obc": 27.0,
+            "sc": 15.0,
+            "st": 7.5,
+            "ews": 10.0,
+            "supernumerary": 5.0,
+        }),
+    )
+    db.add(portfolio)
+    db.flush()
+
+    # Standard branches spec to create
+    standard_branches = [
+        ("CS", "B.Tech Computer Science & Engineering", "Computer Science", 180),
+        ("IT", "B.Tech Information Technology", "Information Technology", 120),
+        ("AI", "B.Tech Artificial Intelligence & Machine Learning", "Artificial Intelligence", 120),
+        ("DS", "B.Tech Data Science & Engineering", "Data Science", 60),
+        ("EC", "B.Tech Electronics & Communication Engineering", "Electronics", 120),
+        ("EE", "B.Tech Electrical & Electronics Engineering", "Electrical", 90),
+        ("ME", "B.Tech Mechanical Engineering", "Mechanical", 120),
+        ("CE", "B.Tech Civil Engineering", "Civil", 60),
+        ("CH", "B.Tech Chemical Engineering", "Chemical", 60),
+        ("AE", "B.Tech Aerospace & Aeronautical Engineering", "Aeronautical", 60),
+        ("RA", "B.Tech Robotics & Automation", "Robotics", 60),
+        ("BT", "B.Tech Biotechnology & Biochemical Engineering", "Biotechnology", 60),
+    ]
+
+    if req.branches and len(req.branches) > 0:
+        req_codes = {b.upper() for b in req.branches}
+        branches_to_create = [b for b in standard_branches if b[0] in req_codes or b[2].upper() in req_codes]
+        if not branches_to_create:
+            branches_to_create = standard_branches
+    else:
+        branches_to_create = standard_branches
+
+    total_cap = 0
+    for b_suffix, b_name, b_discipline, default_cap in branches_to_create:
+        cap = req.default_capacity if req.default_capacity and req.default_capacity > 0 else default_cap
+        total_cap += cap
+        p_code = f"{code}-{b_suffix}-2026"
+        prog = Program(
+            id=uuid.uuid4(),
+            institution_id=new_inst.id,
+            program_code=p_code,
+            program_name=b_name,
+            academic_level="ug",
+            branch=b_discipline,
+            duration_years=4,
+            status="active",
+        )
+        db.add(prog)
+        db.flush()
+
+        intake = IntakeLimit(
+            id=uuid.uuid4(),
+            program_id=prog.id,
+            admission_cycle="2026-27",
+            approved_capacity=cap,
+            category="total",
+            source_type="official",
+            source_reference=eoa_ref,
+            effective_from=date(2026, 6, 1),
+            verification_status="verified",
+        )
+        db.add(intake)
+
+    db.commit()
+    db.refresh(new_inst)
+
+    out = InstitutionOut.model_validate(new_inst)
+    out.total_programs = len(branches_to_create)
+    out.total_approved_intake = total_cap
+    out.total_enrolled = 0
+    out.naac_grade = portfolio.naac_grade
+    out.nba_status = portfolio.nba_status
+    out.pending_complaints = 0
+    out.new_intake_status = "Approved"
+    return out
 
 
 @router.get("/institutions/{id}", response_model=InstitutionOut)

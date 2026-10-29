@@ -195,19 +195,23 @@ def verify_identifier_endpoint(
         raise HTTPException(status_code=400, detail="Identifier cannot be empty.")
 
     alias_map = {
-        "DEMO-APAAR-0001": "DEMO-APAAR-1001",
-        "DEMO-APAAR-0002": "DEMO-APAAR-1002",
-        "DEMO-APAAR-0003": "DEMO-APAAR-1003",
-        "DEMO-APAAR-0004": "DEMO-APAAR-1004",
-        "DEMO-APAAR-0005": "DEMO-APAAR-1005",
+        "DEMO-APAAR-1001": "9876-5432-1011",
+        "DEMO-APAAR-0001": "9876-5432-1011",
+        "DEMO-APAAR-0002": "9039-4117-5224",
+        "DEMO-APAAR-0003": "5955-6904-7397",
+        "DEMO-APAAR-0004": "1001-8368-1205",
+        "DEMO-APAAR-0005": "8124-7529-3341",
     }
     normalized_id = alias_map.get(clean_id.upper(), clean_id)
+    clean_digits = re.sub(r'[^0-9]', '', clean_id)
+    formatted_12 = f"{clean_digits[:4]}-{clean_digits[4:8]}-{clean_digits[8:]}" if len(clean_digits) == 12 else None
 
     # Search for student record
     query = db.query(StudentRecord)
     record = (
         query.filter(StudentRecord.identity_reference == clean_id).first()
         or query.filter(StudentRecord.identity_reference == normalized_id).first()
+        or (query.filter(StudentRecord.identity_reference == formatted_12).first() if formatted_12 else None)
         or query.filter(StudentRecord.institution_student_id.ilike(clean_id)).first()
     )
 
@@ -501,7 +505,7 @@ def get_student_degree_certificate(
             "student_name": record.student_name,
             "institution_name": inst_name,
             "institution_student_id": record.institution_student_id,
-            "apaar_id": record.identity_reference or "DEMO-APAAR-1001",
+            "apaar_id": record.identity_reference or "9876-5432-1011",
             "program_name": prog_name,
             "admission_cycle": record.admission_cycle,
         }
@@ -526,7 +530,7 @@ def get_student_degree_certificate(
     else:
         degree_title = f"Bachelor of Technology in {prog_name}"
 
-    clean_apaar = record.identity_reference or "DEMO-APAAR-1001"
+    clean_apaar = record.identity_reference or "9876-5432-1011"
     cert_no = f"DEG/{record.admission_cycle[:4]}/{inst_code}/{record.institution_student_id}"
 
     return {

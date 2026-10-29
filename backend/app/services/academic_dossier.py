@@ -19,8 +19,8 @@ def get_full_student_academic_dossier(student_record: Any, institution: Any = No
     - Cryptographic Tamper-Evident SHA-256 Seal
     """
     student_name = getattr(student_record, "student_name", "Aarav Sharma")
-    apaar_id = getattr(student_record, "identity_reference", "DEMO-APAAR-1001")
-    roll_no = getattr(student_record, "institution_student_id", "DSCE-2023-CSE-042")
+    apaar_id = getattr(student_record, "identity_reference", "9876-5432-1011")
+    roll_no = getattr(student_record, "institution_student_id", "DSCE-CY-001")
     dob = str(getattr(student_record, "date_of_birth", "2005-04-12"))
     gender = getattr(student_record, "gender", "Male")
     category = getattr(student_record, "admission_category", "general")
@@ -187,7 +187,7 @@ def get_full_student_academic_dossier(student_record: Any, institution: Any = No
             "student_name": student_name,
             "apaar_id": apaar_id,
             "roll_no": roll_no,
-            "abc_account_id": f"ABC-INDIA-{apaar_id.replace('DEMO-APAAR-', '')}-2023",
+            "abc_account_id": f"ABC-INDIA-{apaar_id.replace('-', '')[:8]}-2023",
             "date_of_birth": dob,
             "gender": gender,
             "admission_category": category,

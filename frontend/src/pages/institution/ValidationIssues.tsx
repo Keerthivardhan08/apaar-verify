@@ -13,6 +13,18 @@ import Modal from '../../components/ui/Modal';
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const RULE_LABELS: Record<string, string> = {
+  DUPLICATE_LOCAL_RECORD: 'Rule 4: Local Deduplication',
+  POTENTIAL_CROSS_INSTITUTION_DUPLICATE: 'Rule 5: Cross-Institution Duplicates',
+  INTAKE_EXCEEDED: 'Rule 6: Capacity Limit Breach',
+  CATEGORY_INCONSISTENCY: 'Rule 7: Admission Category Consistency',
+  REQUIRED_FIELD_MISSING: 'Rule 1: Required Field Missing',
+  APAAR_FORMAT_INVALID: 'Rule 2: APAAR Format Invalid',
+  APAAR_NOT_VERIFIED: 'Rule 3: Identity Unverified',
+  APPROVAL_DATA_MISSING: 'Rule 8: Approval Reference Missing',
+  UNUSUAL_UPDATE_PATTERN: 'Rule 9: Unusual Update Pattern',
+};
+
 export const ValidationIssues: React.FC = () => {
   const { getUserInstitutionId, isInstitutionAdmin, isAICTEAdmin } = useAuth();
   const institutionId = getUserInstitutionId() || undefined;
@@ -112,11 +124,15 @@ export const ValidationIssues: React.FC = () => {
       label: 'Rule Code',
       type: 'select',
       options: [
-        { label: 'INTAKE_CAPACITY_EXCEEDED', value: 'INTAKE_CAPACITY_EXCEEDED' },
-        { label: 'CATEGORY_QUOTA_MISMATCH', value: 'CATEGORY_QUOTA_MISMATCH' },
-        { label: 'DUPLICATE_STUDENT_ID', value: 'DUPLICATE_STUDENT_ID' },
-        { label: 'INVALID_DOB_FORMAT', value: 'INVALID_DOB_FORMAT' },
-        { label: 'APAAR_UNVERIFIED', value: 'APAAR_UNVERIFIED' },
+        { label: 'Rule 4: Local Deduplication (DUPLICATE_LOCAL_RECORD)', value: 'DUPLICATE_LOCAL_RECORD' },
+        { label: 'Rule 5: Cross-Institution Duplicates (POTENTIAL_CROSS_INSTITUTION_DUPLICATE)', value: 'POTENTIAL_CROSS_INSTITUTION_DUPLICATE' },
+        { label: 'Rule 6: Capacity Limit Breach (INTAKE_EXCEEDED)', value: 'INTAKE_EXCEEDED' },
+        { label: 'Rule 7: Admission Category Consistency (CATEGORY_INCONSISTENCY)', value: 'CATEGORY_INCONSISTENCY' },
+        { label: 'Rule 1: Required Field Missing', value: 'REQUIRED_FIELD_MISSING' },
+        { label: 'Rule 2: APAAR Format Invalid', value: 'APAAR_FORMAT_INVALID' },
+        { label: 'Rule 3: Identity Unverified', value: 'APAAR_NOT_VERIFIED' },
+        { label: 'Rule 8: Approval Reference Missing', value: 'APPROVAL_DATA_MISSING' },
+        { label: 'Rule 9: Unusual Update Pattern', value: 'UNUSUAL_UPDATE_PATTERN' },
       ],
     },
   ];
@@ -150,12 +166,17 @@ export const ValidationIssues: React.FC = () => {
     },
     {
       key: 'rule_code',
-      header: 'Rule Code',
+      header: 'Rule & Code',
       sortable: true,
       render: (row) => (
-        <span className="font-mono text-xs font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
-          {row.rule_code}
-        </span>
+        <div className="flex flex-col space-y-0.5">
+          <span className="font-semibold text-xs text-indigo-900">
+            {RULE_LABELS[row.rule_code] || row.rule_code}
+          </span>
+          <span className="font-mono text-[10px] text-gray-500">
+            {row.rule_code}
+          </span>
+        </div>
       ),
     },
     {

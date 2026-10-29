@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { studentApi } from '../../services/api';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -22,6 +23,7 @@ import {
 import toast from 'react-hot-toast';
 
 export const StudentInspector: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,14 +33,14 @@ export const StudentInspector: React.FC = () => {
   const handleSearch = async (searchStr?: string) => {
     const q = searchStr !== undefined ? searchStr : query;
     if (!q.trim()) {
-      toast.error('Please enter a student name, APAAR ID, or roll number.');
+      toast.error('Please enter a student name, APAAR ID, roll number, or college.');
       return;
     }
 
     try {
       setIsLoading(true);
       setHasSearched(true);
-      const data = await studentApi.searchInspector(q);
+      const data = await studentApi.searchInspector(q.trim());
       setResults(data);
       if (data.length > 0) {
         setSelectedStudent(data[0]);
@@ -53,8 +55,18 @@ export const StudentInspector: React.FC = () => {
     }
   };
 
+  // Read URL query parameter on load or URL changes
+  useEffect(() => {
+    const urlQuery = searchParams.get('query') || searchParams.get('apaar') || searchParams.get('q');
+    if (urlQuery && urlQuery.trim()) {
+      setQuery(urlQuery.trim());
+      handleSearch(urlQuery.trim());
+    }
+  }, [searchParams]);
+
   const handleQuickChip = (term: string) => {
     setQuery(term);
+    setSearchParams({ query: term });
     handleSearch(term);
   };
 
@@ -70,7 +82,7 @@ export const StudentInspector: React.FC = () => {
             <h1 className="text-xl font-black tracking-tight">AICTE Universal Student & APAAR ID Inspector</h1>
           </div>
           <p className="text-xs text-slate-300 mt-1 max-w-3xl">
-            Cross-institution national search tool. Instantly inspect any student record by name or 12-digit APAAR ID across all 29 colleges to examine admission validity, intake caps, and integrity issues.
+            Cross-institution national search tool. Instantly inspect any student record by name, roll number, or 12-digit APAAR ID across all AICTE recognised colleges to examine admission validity, intake caps, and integrity issues.
           </p>
         </div>
 
@@ -98,7 +110,7 @@ export const StudentInspector: React.FC = () => {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Enter Student Full Name (e.g. Aarav, Sneha) or 12-digit APAAR ID (e.g. 9039-4117-5224)..."
+                placeholder="Enter Student Full Name, 12-digit APAAR ID, Roll No, or AICTE recognised college name/code..."
                 className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
               />
             </div>
@@ -118,12 +130,15 @@ export const StudentInspector: React.FC = () => {
             <span className="font-semibold text-gray-700 shrink-0">Try Demo Lookups:</span>
             {[
               'Aarav Sharma',
-              'Sneha Verma',
+              'Sneha Reddy',
               'Ananya Joshi',
               'Rohan Iyer',
               'Pooja Sharma',
               'IIT-CS-001',
               'DSCE',
+              'IIT Bombay',
+              'RVCE',
+              'Computer Science',
             ].map((chip) => (
               <button
                 key={chip}
@@ -141,7 +156,7 @@ export const StudentInspector: React.FC = () => {
       {/* Results Section */}
       {isLoading ? (
         <div className="py-16">
-          <LoadingSpinner message="Searching 18,400+ national APAAR records across 29 universities..." />
+          <LoadingSpinner message="Searching national APAAR records across AICTE recognised colleges..." />
         </div>
       ) : hasSearched && results.length === 0 ? (
         <Card className="text-center py-12">

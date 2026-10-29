@@ -87,8 +87,8 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         if student_record:
             resolved_apaar = student_record.identity_reference
 
-            # For demo persona DEMO-APAAR-1001, connect to student@dsce.edu.in
-            if identifier.upper() == "DEMO-APAAR-1001":
+            # For demo persona (12-digit APAAR or legacy demo ID), connect to student@dsce.edu.in
+            if identifier.upper() in ("9876-5432-1011", "987654321011", "DEMO-APAAR-1001"):
                 user = db.query(User).filter(User.email == "student@dsce.edu.in").first()
 
             if not user:
@@ -130,7 +130,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         roles_list = [r.role for r in user.roles]
         if "student" in roles_list:
             if user.email == "student@dsce.edu.in":
-                resolved_apaar = "DEMO-APAAR-1001"
+                resolved_apaar = "9876-5432-1011"
             else:
                 sr = db.query(StudentRecord).filter(
                     or_(
@@ -216,15 +216,27 @@ def register_student(request: StudentRegisterRequest, db: Session = Depends(get_
     if not clean_apaar or not clean_email or not request.password:
         raise HTTPException(status_code=400, detail="APAAR ID, Email, and Password are required.")
 
+    clean_digits = re.sub(r'[^0-9]', '', clean_apaar)
+    formatted_apaar = f"{clean_digits[:4]}-{clean_digits[4:8]}-{clean_digits[8:]}" if len(clean_digits) == 12 else clean_apaar
+
     # Look up official student record by APAAR ID
     student_record = db.query(StudentRecord).filter(
-        StudentRecord.identity_reference.ilike(clean_apaar)
+        or_(
+            StudentRecord.identity_reference == clean_apaar,
+            StudentRecord.identity_reference == formatted_apaar,
+            StudentRecord.identity_reference.ilike(clean_apaar)
+        )
     ).first()
 
     inst_id = None
     resolved_name = request.full_name or "Student"
     if student_record:
-        resolved_name = student_record.student_name
+        # If user explicitly registered with their own custom name, update the student record
+        if request.full_name and request.full_name.strip():
+            resolved_name = request.full_name.strip()
+            student_record.student_name = resolved_name
+        else:
+            resolved_name = student_record.student_name
         inst_id = student_record.institution_id
     elif request.institution_id:
         try:
@@ -250,6 +262,46 @@ def register_student(request: StudentRegisterRequest, db: Session = Depends(get_
         )
         db.add(user)
         db.flush()
+
+    # If no StudentRecord exists for this new student, create one in the database immediately
+    if not student_record:
+        target_inst = None
+        if inst_id:
+            target_inst = db.query(Institution).filter(Institution.id == inst_id).first()
+        if not target_inst:
+            target_inst = db.query(Institution).filter(Institution.institution_code == "DSCE-BLR").first()
+        if not target_inst:
+            target_inst = db.query(Institution).first()
+
+        target_prog = None
+        if target_inst:
+            target_prog = db.query(Program).filter(Program.institution_id == target_inst.id).first()
+
+        import random
+        from datetime import date
+        random_roll = f"{(target_inst.institution_code[:4] if target_inst else 'STU')}-UG-{random.randint(100, 999):03d}"
+
+        student_record = StudentRecord(
+            id=uuid.uuid4(),
+            institution_id=target_inst.id if target_inst else uuid.uuid4(),
+            program_id=target_prog.id if target_prog else uuid.uuid4(),
+            admission_cycle="2026-27",
+            student_name=resolved_name,
+            institution_student_id=random_roll,
+            identity_reference=formatted_apaar,
+            date_of_birth=date(2005, 5, 15),
+            gender="male",
+            admission_category="general",
+            admission_status="admitted",
+            supernumerary_category="none",
+            nri_category="not_applicable",
+            record_status="accepted",
+            identity_verification_status="verified",
+            created_by=user.id,
+        )
+        db.add(student_record)
+        db.flush()
+        inst_id = student_record.institution_id
 
     # Ensure student role is assigned
     existing_roles = [r.role for r in user.roles]
@@ -416,7 +468,7 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
     apaar_id = None
     if any(r["role"] == "student" for r in roles):
         if current_user.email == "student@dsce.edu.in":
-            apaar_id = "DEMO-APAAR-1001"
+            apaar_id = "9876-5432-1011"
         else:
             sr = db.query(StudentRecord).filter(
                 StudentRecord.student_name.ilike(f"%{current_user.full_name.split('(')[0].strip()}%")

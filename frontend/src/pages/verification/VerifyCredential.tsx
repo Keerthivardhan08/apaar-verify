@@ -33,7 +33,7 @@ export const VerifyCredential: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'identifier' | 'personas' | 'token'>('identifier');
 
   // Identifier Form State
-  const [identifierInput, setIdentifierInput] = useState('DEMO-APAAR-1001');
+  const [identifierInput, setIdentifierInput] = useState('9876-5432-1011');
   const [stakeholderRole, setStakeholderRole] = useState<'employer' | 'aicte' | 'university' | 'testing'>('employer');
   const [selectedPurpose, setSelectedPurpose] = useState('employment_screening');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -327,7 +327,7 @@ export const VerifyCredential: React.FC = () => {
                   type="text"
                   value={identifierInput}
                   onChange={(e) => setIdentifierInput(e.target.value)}
-                  placeholder="e.g. DEMO-APAAR-1001 or IIT-CS-001"
+                  placeholder="e.g. 9876-5432-1011 or DSCE-CY-001"
                   className="w-full pl-10 pr-24 py-2.5 text-sm font-mono border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-none bg-white"
                 />
                 <button
@@ -348,32 +348,32 @@ export const VerifyCredential: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      setIdentifierInput('DEMO-APAAR-1001');
+                      setIdentifierInput('9876-5432-1011');
                       handleRoleChange('employer');
                     }}
                     className="text-[11px] font-mono font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg border border-indigo-200 transition-colors"
                   >
-                    ⚡ DEMO-APAAR-1001 (Aarav Sharma • IIT CS)
+                    ⚡ 9876-5432-1011 (Aarav Sharma • DSCE Cyber Security)
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      setIdentifierInput('DEMO-APAAR-1002');
+                      setIdentifierInput('9039-4117-5224');
                       handleRoleChange('university');
                     }}
                     className="text-[11px] font-mono font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition-colors"
                   >
-                    ⚡ DEMO-APAAR-1002 (Kavya Sharma • IIT CS)
+                    ⚡ 9039-4117-5224 (Kavya Sharma • DSCE CS)
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      setIdentifierInput('DEMO-APAAR-7001');
+                      setIdentifierInput('5955-6904-7397');
                       handleRoleChange('aicte');
                     }}
                     className="text-[11px] font-mono font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg border border-purple-200 transition-colors"
                   >
-                    ⚡ DEMO-APAAR-7001 (Supernumerary Quota)
+                    ⚡ 5955-6904-7397 (Supernumerary Quota)
                   </button>
                   <button
                     type="button"
@@ -450,7 +450,7 @@ export const VerifyCredential: React.FC = () => {
                       <Button
                         variant="primary"
                         size="sm"
-                        onClick={() => handleVerifyIdentifier('DEMO-APAAR-1001', 'employment_screening')}
+                        onClick={() => handleVerifyIdentifier('9876-5432-1011', 'employment_screening')}
                         icon={<ArrowRight className="w-3.5 h-3.5" />}
                       >
                         Run Employer Verification
@@ -478,7 +478,7 @@ export const VerifyCredential: React.FC = () => {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => handleVerifyIdentifier('DEMO-APAAR-7001', 'admission_verification')}
+                        onClick={() => handleVerifyIdentifier('5955-6904-7397', 'admission_verification')}
                         icon={<ArrowRight className="w-3.5 h-3.5" />}
                       >
                         Run Regulatory Audit
@@ -506,7 +506,7 @@ export const VerifyCredential: React.FC = () => {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => handleVerifyIdentifier('DEMO-APAAR-1002', 'higher_education_transfer')}
+                        onClick={() => handleVerifyIdentifier('9039-4117-5224', 'higher_education_transfer')}
                         icon={<ArrowRight className="w-3.5 h-3.5" />}
                       >
                         Verify Transfer Credentials
@@ -534,7 +534,7 @@ export const VerifyCredential: React.FC = () => {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => handleVerifyIdentifier('DEMO-APAAR-1001', 'minimal_proof')}
+                        onClick={() => handleVerifyIdentifier('9876-5432-1011', 'minimal_proof')}
                         icon={<ArrowRight className="w-3.5 h-3.5" />}
                       >
                         Verify Zero-PII Proof

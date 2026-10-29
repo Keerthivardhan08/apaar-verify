@@ -69,12 +69,12 @@ export const ApaarQuickDesk: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<any | null>(null);
 
-  // Quick pick chips for demonstration
+  // Quick pick chips for demonstration (Strict 12-Digit AICTE format)
   const demoChips = [
-    { label: 'IIT Student #1', id: 'DEMO-APAAR-1001' },
-    { label: 'IIT Student #2', id: 'DEMO-APAAR-1002' },
-    { label: 'IIT Student #3', id: 'DEMO-APAAR-1003' },
-    { label: '12-Digit Numeric', id: 'DEMO-APAAR-1004' },
+    { label: 'DSCE Cyber Security (Aarav)', id: '9876-5432-1011' },
+    { label: 'DSCE CS Student', id: '9039-4117-5224' },
+    { label: 'IIT Delhi Student', id: '5955-6904-7397' },
+    { label: 'NIT Surathkal', id: '1001-8368-1205' },
   ];
 
   const handleFetchRecord = async (searchId?: string) => {
@@ -244,7 +244,7 @@ export const ApaarQuickDesk: React.FC = () => {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Enter APAAR ID (e.g. DEMO-APAAR-1001 or DEMO-APAAR-1004)..."
+                placeholder="Enter 12-digit APAAR ID (e.g. 9876-5432-1011 or 12-digit number)..."
                 value={apaarInput}
                 onChange={(e) => setApaarInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -311,10 +311,10 @@ export const ApaarQuickDesk: React.FC = () => {
           </p>
           <div className="pt-2">
             <button
-              onClick={() => handleFetchRecord('DEMO-APAAR-1001')}
+              onClick={() => handleFetchRecord('9876-5432-1011')}
               className="text-xs font-semibold text-indigo-700 hover:text-indigo-800 underline"
             >
-              Click here to auto-fetch DEMO-APAAR-1001 & unlock the update form
+              Click here to auto-fetch 9876-5432-1011 & unlock the update form
             </button>
           </div>
         </Card>

@@ -384,7 +384,7 @@ async def stakeholder_query(
 STAKEHOLDER_REVIEWS: List[Dict[str, Any]] = [
     {
         "id": "rev-nta-101",
-        "apaar_id": "DEMO-APAAR-1001",
+        "apaar_id": "9876-5432-1011",
         "student_name": "Aarav Sharma",
         "stakeholder_id": "stk-nta-01",
         "stakeholder_name": "National Testing Agency (NTA)",
@@ -457,7 +457,162 @@ async def list_stakeholder_reviews(
     """
     clean_id = apaar_id.strip()
     matched = [r for r in STAKEHOLDER_REVIEWS if r["apaar_id"] == clean_id]
-    if not matched and clean_id == "DEMO-APAAR-1001":
+    if not matched and clean_id in ("DEMO-APAAR-1001", "9876-5432-1011", "987654321011"):
         matched = STAKEHOLDER_REVIEWS
     return matched
+
+
+# ─── Stakeholder Background Check Requests & Student Approval Desk ───────────
+
+BACKGROUND_CHECK_REQUESTS: List[Dict[str, Any]] = [
+    {
+        "id": "bgc-req-101",
+        "apaar_id": "9876-5432-1011",
+        "student_name": "Aarav Sharma",
+        "stakeholder_id": "stk-tcs-02",
+        "stakeholder_name": "Tata Consultancy Services (TCS TalentDesk)",
+        "purpose": "employment_screening",
+        "check_type": "Pre-Employment Academic & Enrollment Background Verification",
+        "status": "APPROVED",
+        "requested_at": "2026-10-28T09:15:00Z",
+        "approved_at": "2026-10-28T10:30:00Z",
+        "notes": "Pre-employment verification for Software Engineer position.",
+        "permitted_fields": ["student_name", "program_name", "marksheet_details", "intake_compliance", "graduation_status"],
+    },
+    {
+        "id": "bgc-req-102",
+        "apaar_id": "9876-5432-1011",
+        "student_name": "Aarav Sharma",
+        "stakeholder_id": "stk-nta-01",
+        "stakeholder_name": "National Testing Agency (NTA)",
+        "purpose": "exam_registration",
+        "check_type": "Higher Studies & GATE Exam Eligibility Check",
+        "status": "PENDING_STUDENT_APPROVAL",
+        "requested_at": "2026-10-29T08:00:00Z",
+        "approved_at": None,
+        "notes": "Candidate eligibility verification for National Postgraduate Entrance Test.",
+        "permitted_fields": ["student_name", "program_name", "academic_level", "admission_cycle"],
+    },
+]
+
+
+class BackgroundCheckCreateRequest(BaseModel):
+    apaar_id: str
+    stakeholder_id: str
+    stakeholder_name: str
+    purpose: str = "employment_screening"
+    check_type: str = "Pre-Employment Academic & Enrollment Background Verification"
+    notes: Optional[str] = None
+
+
+class BackgroundCheckActionRequest(BaseModel):
+    action: str  # APPROVE or REJECT
+    remarks: Optional[str] = None
+
+
+@router.post("/background-check/request", summary="Stakeholder Sends Background Check Request to Student")
+async def create_background_check_request(
+    body: BackgroundCheckCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Authorized stakeholder submits an official background check request to the student.
+    Status starts in PENDING_STUDENT_APPROVAL.
+    Protected student credentials stay shielded until student approves.
+    """
+    clean_id = body.apaar_id.strip()
+    student = db.query(StudentRecord).filter(StudentRecord.identity_reference == clean_id).first()
+    student_name = student.student_name if student else "Registered Student"
+
+    req_id = f"bgc-{uuid.uuid4().hex[:8]}"
+    ts = datetime.utcnow().isoformat() + "Z"
+
+    new_req = {
+        "id": req_id,
+        "apaar_id": clean_id,
+        "student_name": student_name,
+        "stakeholder_id": body.stakeholder_id,
+        "stakeholder_name": body.stakeholder_name,
+        "purpose": body.purpose,
+        "check_type": body.check_type,
+        "status": "PENDING_STUDENT_APPROVAL",
+        "requested_at": ts,
+        "approved_at": None,
+        "notes": body.notes or "Official background verification request.",
+        "permitted_fields": ["student_name", "program_name", "marksheet_details", "intake_compliance", "graduation_status"],
+    }
+    BACKGROUND_CHECK_REQUESTS.insert(0, new_req)
+
+    # Initialize consent map for this student/stakeholder as pending
+    if clean_id not in STUDENT_CONSENT_MAP:
+        STUDENT_CONSENT_MAP[clean_id] = {}
+    STUDENT_CONSENT_MAP[clean_id][body.stakeholder_id] = "pending"
+
+    return {
+        "status": "success",
+        "message": f"Background check request dispatched to {student_name} ({clean_id}). Status: Pending Student Approval.",
+        "request": new_req,
+    }
+
+
+@router.get("/background-checks/student/{apaar_id}", summary="Get Background Check Requests for Student")
+async def list_background_checks_for_student(
+    apaar_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Returns all background check requests sent by stakeholders to this student."""
+    clean_id = apaar_id.strip()
+    results = [r for r in BACKGROUND_CHECK_REQUESTS if r["apaar_id"] == clean_id]
+    if not results and clean_id in ("9876-5432-1011", "987654321011", "DEMO-APAAR-1001"):
+        results = BACKGROUND_CHECK_REQUESTS
+    return results
+
+
+@router.get("/background-checks/stakeholder/{stakeholder_id}", summary="Get Background Check Tracking Desk for Stakeholder")
+async def list_background_checks_for_stakeholder(
+    stakeholder_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Returns all background check requests created by this stakeholder."""
+    results = [r for r in BACKGROUND_CHECK_REQUESTS if r["stakeholder_id"] == stakeholder_id]
+    if not results:
+        results = BACKGROUND_CHECK_REQUESTS
+    return results
+
+
+@router.post("/background-check/{request_id}/action", summary="Student Approves or Rejects Background Check Request")
+async def student_action_background_check(
+    request_id: str,
+    body: BackgroundCheckActionRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Student grants or denies permission for a stakeholder background check."""
+    req = next((r for r in BACKGROUND_CHECK_REQUESTS if r["id"] == request_id), None)
+    if not req:
+        raise HTTPException(status_code=404, detail="Background check request not found.")
+
+    action_norm = body.action.upper()
+    ts = datetime.utcnow().isoformat() + "Z"
+
+    if action_norm == "APPROVE":
+        req["status"] = "APPROVED"
+        req["approved_at"] = ts
+        if req["apaar_id"] not in STUDENT_CONSENT_MAP:
+            STUDENT_CONSENT_MAP[req["apaar_id"]] = {}
+        STUDENT_CONSENT_MAP[req["apaar_id"]][req["stakeholder_id"]] = "approved"
+        msg = f"Background check request approved! {req['stakeholder_name']} can now view your verified academic records."
+    else:
+        req["status"] = "REJECTED"
+        req["approved_at"] = None
+        if req["apaar_id"] not in STUDENT_CONSENT_MAP:
+            STUDENT_CONSENT_MAP[req["apaar_id"]] = {}
+        STUDENT_CONSENT_MAP[req["apaar_id"]][req["stakeholder_id"]] = "rejected"
+        msg = f"Background check request rejected. {req['stakeholder_name']} access remains restricted."
+
+    return {
+        "status": "success",
+        "message": msg,
+        "request": req,
+    }
 

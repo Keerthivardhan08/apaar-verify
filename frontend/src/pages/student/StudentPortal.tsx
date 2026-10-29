@@ -66,22 +66,22 @@ interface CorrectionWorkflowItem {
 }
 
 export const StudentPortal: React.FC = () => {
-  const { logout } = useAuth();
-  const [apaarId, setApaarId] = useState<string>('DEMO-APAAR-1001');
-  const [studentData, setStudentData] = useState<any>({
-    student_name: 'Aarav Sharma',
-    apaar_id: 'DEMO-APAAR-1001',
-    roll_no: 'DSCE-2023-CSE-042',
+  const { user, logout } = useAuth();
+  const [apaarId, setApaarId] = useState<string>(() => user?.apaar_id || '9876-5432-1011');
+  const [studentData, setStudentData] = useState<any>(() => ({
+    student_name: user?.full_name || 'Aarav Sharma',
+    apaar_id: user?.apaar_id || '9876-5432-1011',
+    roll_no: 'DSCE-CY-001',
     date_of_birth: '2005-04-12',
     gender: 'Male',
     institution_name: 'Dayananda Sagar College of Engineering',
-    program_name: 'Bachelor of Technology (B.Tech)',
-    branch: 'Computer Science and Engineering',
+    program_name: 'B.E. Computer Science & Engineering (Cyber Security)',
+    branch: 'Cyber Security',
     admission_cycle: '2026-27',
     admission_category: 'general',
     identity_verification_status: 'verified',
     record_status: 'accepted',
-  });
+  }));
 
   const [dossier, setDossier] = useState<any>(null);
   const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
@@ -90,9 +90,25 @@ export const StudentPortal: React.FC = () => {
   const [requests, setRequests] = useState<StakeholderRequest[]>([]);
   const [reviews, setReviews] = useState<StakeholderReview[]>([]);
   const [correctionWorkflows, setCorrectionWorkflows] = useState<CorrectionWorkflowItem[]>([]);
+  const [bgChecks, setBgChecks] = useState<any[]>([]);
+  const [actingBgId, setActingBgId] = useState<string | null>(null);
   const [loadingData, setLoadingData] = useState<boolean>(true);
   const [decidingId, setDecidingId] = useState<string | null>(null);
   const [copiedApaar, setCopiedApaar] = useState<boolean>(false);
+
+  // Synchronize state when authenticated user updates
+  useEffect(() => {
+    if (user?.apaar_id && user.apaar_id !== apaarId) {
+      setApaarId(user.apaar_id);
+    }
+    if (user?.full_name) {
+      setStudentData((prev: any) => ({
+        ...prev,
+        student_name: user.full_name,
+        apaar_id: user.apaar_id || prev.apaar_id,
+      }));
+    }
+  }, [user]);
 
   // Raise Correction Request Modal / Form
   const [showCorrectionModal, setShowCorrectionModal] = useState<boolean>(false);
@@ -102,38 +118,51 @@ export const StudentPortal: React.FC = () => {
   const [isSubmittingCorrection, setIsSubmittingCorrection] = useState<boolean>(false);
   const [advancingId, setAdvancingId] = useState<string | null>(null);
 
-  // Fetch student profile, academic dossier, requests, reviews, and workflows
-  const loadAllData = async () => {
+  // Fetch student profile, academic dossier, requests, reviews, workflows, and background checks
+  const loadAllData = async (overrideId?: string) => {
+    const targetId = overrideId || apaarId || user?.apaar_id || '9876-5432-1011';
     setLoadingData(true);
     try {
       // 1. Student profile
-      const searchRes = await studentApi.searchInspector(apaarId);
+      const searchRes = await studentApi.searchInspector(targetId);
       if (searchRes && searchRes.length > 0) {
         setStudentData(searchRes[0]);
+      } else if (user) {
+        setStudentData((prev: any) => ({
+          ...prev,
+          student_name: user.full_name || prev.student_name,
+          apaar_id: user.apaar_id || targetId,
+        }));
       }
 
       // 2. Comprehensive Academic Dossier (courses taken and studied till now)
-      const dosRes = await studentApi.getAcademicDossier(apaarId);
+      const dosRes = await studentApi.getAcademicDossier(targetId);
       if (dosRes) {
         setDossier(dosRes);
       }
 
       // 3. Stakeholder Consent Requests
-      const reqRes = await consentApi.getStudentRequests(apaarId);
+      const reqRes = await consentApi.getStudentRequests(targetId);
       if (reqRes && reqRes.requests) {
         setRequests(reqRes.requests);
       }
 
       // 4. Stakeholder Reviewer Determinations
-      const revRes = await consentApi.getStakeholderReviews(apaarId);
+      const revRes = await consentApi.getStakeholderReviews(targetId);
       if (revRes) {
         setReviews(revRes);
       }
 
       // 5. Multi-Stage Correction Workflows
-      const wfRes = await studentApi.getCorrectionRequests({ apaar_id: apaarId });
+      const wfRes = await studentApi.getCorrectionRequests({ apaar_id: targetId });
       if (wfRes) {
         setCorrectionWorkflows(wfRes);
+      }
+
+      // 6. Stakeholder Background Check Requests
+      const bgRes = await consentApi.getStudentBackgroundChecks(targetId);
+      if (bgRes) {
+        setBgChecks(bgRes);
       }
     } catch (e) {
       console.warn('Error loading student portal data:', e);
@@ -143,8 +172,30 @@ export const StudentPortal: React.FC = () => {
   };
 
   useEffect(() => {
-    loadAllData();
+    loadAllData(apaarId);
   }, [apaarId]);
+
+  // Handle student approving or rejecting background check request
+  const handleBgCheckAction = async (requestId: string, action: 'APPROVE' | 'REJECT') => {
+    setActingBgId(requestId);
+    try {
+      const res = await consentApi.actionBackgroundCheck(requestId, action);
+      if (action === 'APPROVE') {
+        toast.success(res.message || 'Background check request approved! Stakeholder authorized.');
+      } else {
+        toast.error(res.message || 'Background check request rejected.');
+      }
+      // Refresh background checks and consent map
+      const bgRes = await consentApi.getStudentBackgroundChecks(apaarId);
+      if (bgRes) setBgChecks(bgRes);
+      const reqRes = await consentApi.getStudentRequests(apaarId);
+      if (reqRes && reqRes.requests) setRequests(reqRes.requests);
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Failed to update background check status');
+    } finally {
+      setActingBgId(null);
+    }
+  };
 
   const handleCopyApaar = () => {
     navigator.clipboard.writeText(studentData.apaar_id || apaarId);
@@ -719,6 +770,126 @@ export const StudentPortal: React.FC = () => {
           )}
         </div>
 
+        {/* SECTION 4A: Stakeholder Background Check Requests & Approvals */}
+        <div className="bg-slate-800/50 border border-slate-700/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">
+                  Incoming Stakeholder Background Check Requests
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Third-party employers, recruiters, and exam agencies send background check requests. <span className="text-cyan-300 font-semibold">Your explicit approval is mandatory</span> before they can inspect your verified records.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => loadAllData()}
+              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+              title="Refresh Requests"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingData ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+
+          {bgChecks.length === 0 ? (
+            <div className="p-8 text-center bg-slate-900/60 rounded-xl border border-slate-800 text-xs text-slate-500">
+              No active background check requests for your APAAR ID ({studentData.apaar_id || apaarId}). When employers or agencies submit requests, they will appear here.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {bgChecks.map((bg) => {
+                const isPending = bg.status === 'PENDING_STUDENT_APPROVAL';
+                const isApproved = bg.status === 'APPROVED';
+                const isRejected = bg.status === 'REJECTED';
+
+                return (
+                  <div
+                    key={bg.id}
+                    className={`p-5 rounded-2xl border transition-all ${
+                      isApproved
+                        ? 'bg-emerald-950/20 border-emerald-500/40'
+                        : isRejected
+                        ? 'bg-rose-950/20 border-rose-500/30'
+                        : 'bg-slate-900/90 border-slate-700/90'
+                    } space-y-3 shadow-md`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 rounded-xl bg-slate-800 text-cyan-400 border border-slate-700">
+                          <Building2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-white">{bg.stakeholder_name}</div>
+                          <div className="text-xs text-slate-400">{bg.check_type || 'Academic & Enrollment Verification'}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <span
+                          className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase border ${
+                            isApproved
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                              : isRejected
+                              ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                              : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          }`}
+                        >
+                          {isApproved
+                            ? '✓ Background Check Approved'
+                            : isRejected
+                            ? '✕ Access Declined'
+                            : '⏳ Pending Your Approval'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 text-xs space-y-1">
+                      <div className="text-slate-300">
+                        <span className="text-slate-500 font-semibold">Purpose:</span> {bg.purpose}
+                      </div>
+                      <div className="text-slate-400 text-[11px]">
+                        <span className="text-slate-500 font-semibold">Remarks:</span> "{bg.notes || 'Official background check verification request.'}"
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 font-mono">
+                        <span>Request ID: {bg.id}</span>
+                        <span>Requested: {new Date(bg.requested_at).toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    {/* Actions if Pending */}
+                    {isPending && (
+                      <div className="flex items-center justify-end space-x-3 pt-2 border-t border-slate-800">
+                        <button
+                          type="button"
+                          disabled={actingBgId === bg.id}
+                          onClick={() => handleBgCheckAction(bg.id, 'REJECT')}
+                          className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-rose-950/60 text-rose-300 border border-slate-700 hover:border-rose-500/40 transition disabled:opacity-50"
+                        >
+                          Decline Request
+                        </button>
+                        <button
+                          type="button"
+                          disabled={actingBgId === bg.id}
+                          onClick={() => handleBgCheckAction(bg.id, 'APPROVE')}
+                          className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition disabled:opacity-50 flex items-center space-x-1.5"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Approve Background Check</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {/* SECTION 4: Privacy Consent Gate (Stakeholder Verification Requests) */}
         <div className="bg-slate-800/50 border border-slate-700/80 rounded-2xl p-6 backdrop-blur-sm space-y-4">
           <div className="flex items-start justify-between">
@@ -737,7 +908,7 @@ export const StudentPortal: React.FC = () => {
             </div>
 
             <button
-              onClick={loadAllData}
+              onClick={() => loadAllData()}
               className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
               title="Refresh All"
             >

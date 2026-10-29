@@ -200,32 +200,44 @@ def get_report_preview(
         students = st_q.all()
 
         total = len(students)
-        sc_st_obc = len([s for s in students if s.admission_category in ("SC", "ST", "OBC_NCL")])
-        gen_ews = len([s for s in students if s.admission_category in ("GENERAL", "EWS")])
-        supernumerary = len([s for s in students if s.supernumerary_category and s.supernumerary_category != "none"])
-        apaar_verified = len([s for s in students if s.identity_reference and s.identity_reference != "none"])
+        sc_st_obc = len([s for s in students if s.admission_category.lower() in ("sc", "st", "obc", "obc_ncl")])
+        gen_ews = len([s for s in students if s.admission_category.lower() in ("general", "ews")])
+        supernumerary = len([s for s in students if s.supernumerary_category and s.supernumerary_category.lower() != "none"])
+        apaar_verified = len([s for s in students if s.identity_reference and s.identity_reference.lower() != "none"])
+
+        # Determine sanctioned capacity dynamically for the target institutions
+        if target_inst_ids:
+            total_cap = db.query(func.sum(IntakeLimit.approved_capacity))\
+                .join(Program, IntakeLimit.program_id == Program.id)\
+                .filter(Program.institution_id.in_(target_inst_ids)).scalar()
+            total_capacity = int(total_cap) if total_cap else max(total, 60)
+        else:
+            total_capacity = max(total, 180)
+
+        quota_capacity = int(total_capacity * 0.495)  # Statutory 49.5% OBC/SC/ST reservation
+        super_capacity = max(5, int(total_capacity * 0.05))
 
         return [
             {
                 "framework": "NAAC Criterion 2.1.1",
                 "metric_title": "Demand Ratio & Enrolment Saturation",
-                "sanctioned_capacity": 180,
+                "sanctioned_capacity": total_capacity,
                 "actual_admitted": total,
-                "fulfillment_rate": f"{round((total / 180) * 100, 1)}%",
-                "audit_classification": "Compliant (Benchmark Met)",
+                "fulfillment_rate": f"{round((total / total_capacity) * 100, 1) if total_capacity > 0 else 100.0}%",
+                "audit_classification": "Compliant (Benchmark Met)" if total <= total_capacity else "Intake Warning",
             },
             {
                 "framework": "NAAC Criterion 2.1.2",
                 "metric_title": "Reserved Category Quota Adherence (SC/ST/OBC)",
-                "sanctioned_capacity": 90,
+                "sanctioned_capacity": quota_capacity,
                 "actual_admitted": sc_st_obc,
-                "fulfillment_rate": f"{round((sc_st_obc / 90) * 100, 1) if sc_st_obc > 0 else 85.0}%",
+                "fulfillment_rate": f"{round((sc_st_obc / quota_capacity) * 100, 1) if quota_capacity > 0 else 85.0}%",
                 "audit_classification": "Affirmative Action Verified",
             },
             {
                 "framework": "NBA Criterion 4.1",
                 "metric_title": "Supernumerary & Diversity Inclusion",
-                "sanctioned_capacity": 25,
+                "sanctioned_capacity": super_capacity,
                 "actual_admitted": supernumerary,
                 "fulfillment_rate": "100.0%",
                 "audit_classification": "Special Category Clear",
@@ -277,13 +289,16 @@ def get_report_preview(
 
     elif report_type == "policymaking":
         # Macro State/National Educational Policy Planning
-        insts = db.query(Institution).all()
+        insts_q = db.query(Institution)
+        if target_inst_ids:
+            insts_q = insts_q.filter(Institution.id.in_(target_inst_ids))
+        insts = insts_q.all()
         results = []
         for inst in insts:
             st_count = db.query(StudentRecord).filter(StudentRecord.institution_id == inst.id).count()
             capacity = 180 if inst.institution_code == "IIT-DEMO" else (120 if inst.institution_code == "NIT-DEMO" else 60)
             vacant = max(0, capacity - st_count)
-            vacant_pct = round((vacant / capacity) * 100, 1)
+            vacant_pct = round((vacant / capacity) * 100, 1) if capacity > 0 else 0.0
 
             results.append({
                 "institution_code": inst.institution_code,
@@ -345,10 +360,19 @@ def download_custom_report(
     for item in data:
         writer.writerow(sanitize_row_for_export(item))
 
+    filename_prefix = ""
+    if institution_id:
+        try:
+            inst = db.query(Institution).filter(Institution.id == uuid.UUID(institution_id)).first()
+            if inst:
+                filename_prefix = f"{inst.institution_code}_"
+        except Exception:
+            pass
+
     return Response(
         content=output.getvalue(),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={report_type}_report_{admission_cycle or '2026'}.csv"},
+        headers={"Content-Disposition": f"attachment; filename={filename_prefix}{report_type}_report_{admission_cycle or '2026'}.csv"},
     )
 
 

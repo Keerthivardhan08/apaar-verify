@@ -192,6 +192,11 @@ export const institutionApi = {
     const response = await apiClient.get<InstitutionPortfolio>('/institutions/' + id + '/portfolio');
     return response.data;
   },
+
+  createInstitution: async (data: any): Promise<Institution> => {
+    const response = await apiClient.post<Institution>('/institutions', data);
+    return response.data;
+  },
 };
 
 // ============================================================
@@ -777,6 +782,33 @@ export const consentApi = {
     const response = await apiClient.get<any>('/consent/stakeholder-query', {
       params: { apaar_id: apaarId, stakeholder_id: stakeholderId },
     });
+    return response.data;
+  },
+
+  createBackgroundCheckRequest: async (data: {
+    apaar_id: string;
+    stakeholder_id: string;
+    stakeholder_name: string;
+    purpose?: string;
+    check_type?: string;
+    notes?: string;
+  }): Promise<any> => {
+    const response = await apiClient.post<any>('/consent/background-check/request', data);
+    return response.data;
+  },
+
+  getStudentBackgroundChecks: async (apaarId: string): Promise<any[]> => {
+    const response = await apiClient.get<any[]>(`/consent/background-checks/student/${apaarId}`);
+    return response.data;
+  },
+
+  getStakeholderBackgroundChecks: async (stakeholderId: string): Promise<any[]> => {
+    const response = await apiClient.get<any[]>(`/consent/background-checks/stakeholder/${stakeholderId}`);
+    return response.data;
+  },
+
+  actionBackgroundCheck: async (requestId: string, action: 'APPROVE' | 'REJECT', remarks?: string): Promise<any> => {
+    const response = await apiClient.post<any>(`/consent/background-check/${requestId}/action`, { action, remarks });
     return response.data;
   },
 };

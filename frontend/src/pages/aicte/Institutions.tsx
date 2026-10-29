@@ -9,7 +9,8 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import InstitutePortfolioModal from '../../components/institutions/InstitutePortfolioModal';
-import { Building2, School, MapPin, ExternalLink, ShieldCheck, AlertTriangle, Award, Layers, BarChart3 } from 'lucide-react';
+import AddMemberCollegeModal from '../../components/institutions/AddMemberCollegeModal';
+import { Building2, School, MapPin, ExternalLink, ShieldCheck, AlertTriangle, Award, Layers, BarChart3, PlusCircle } from 'lucide-react';
 
 export const Institutions: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export const Institutions: React.FC = () => {
 
   const [selectedInst, setSelectedInst] = useState<Institution | null>(null);
   const [portfolioInstId, setPortfolioInstId] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const { data: institutions = [], isLoading, isError, refetch } = useInstitutions({
     state: filters.state || undefined,
@@ -219,8 +221,18 @@ export const Institutions: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Institutions Directory & Accreditation Registry</h1>
           <p className="text-sm text-gray-500">
-            National register of {institutions.length} technical institutions under AICTE jurisdiction with NBA, NAAC, complaints desk and seat utilization analytics.
+            National register of {institutions.length} AICTE recognised technical institutions with NBA, NAAC, complaints desk and seat utilization analytics.
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="primary"
+            onClick={() => setIsAddModalOpen(true)}
+            icon={<PlusCircle className="w-4 h-4" />}
+            className="font-bold shadow-md shadow-indigo-600/20 bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            Add Member College
+          </Button>
         </div>
       </div>
 
@@ -252,6 +264,13 @@ export const Institutions: React.FC = () => {
         isOpen={Boolean(portfolioInstId)}
         onClose={() => setPortfolioInstId(null)}
         onOpenComplianceDesk={(id) => navigate(`/aicte/institutions/${id}`)}
+      />
+
+      {/* Add New AICTE Member College Modal */}
+      <AddMemberCollegeModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={() => refetch()}
       />
 
       {/* Quick View Modal */}

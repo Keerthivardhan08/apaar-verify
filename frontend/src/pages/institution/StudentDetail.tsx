@@ -659,7 +659,7 @@ export const StudentDetail: React.FC = () => {
                 National Academic Identity (APAAR ID)
               </label>
               <p className="font-mono text-sm font-bold text-indigo-950 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 inline-block">
-                {student.apaar_id || student.identity_reference || 'DEMO-APAAR-1001'}
+                {student.apaar_id || student.identity_reference || '9876-5432-1011'}
               </p>
             </div>
 
@@ -1475,7 +1475,7 @@ export const StudentDetail: React.FC = () => {
                     <div>
                       <span className="text-gray-500 font-semibold block">Academic Identity (APAAR ID):</span>
                       <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 inline-block mt-0.5">
-                        {credData.apaar_id || student.identity_reference || 'DEMO-APAAR-1001'}
+                        {credData.apaar_id || student.identity_reference || '9876-5432-1011'}
                       </span>
                     </div>
 

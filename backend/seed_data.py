@@ -43,7 +43,7 @@ def ensure_demo_users(db: Session):
         {
             "email": "reviewer@aicte.gov.in",
             "full_name": "Pooja Sharma (Compliance Reviewer)",
-            "roles": [("reviewer", None)],
+            "roles": [("reviewer", None), ("aicte_admin", None)],
         },
         {
             "email": "operator@dsce.edu.in",

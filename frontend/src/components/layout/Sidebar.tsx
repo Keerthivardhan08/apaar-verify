@@ -25,7 +25,8 @@ import {
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { isAICTEAdmin } = useAuth();
+  const { isAICTEAdmin, isReviewer } = useAuth();
+  const isAicteStaff = isAICTEAdmin() || isReviewer();
 
   const institutionNavItems = [
     { label: 'Overview', to: '/institution', icon: LayoutDashboard, end: true },
@@ -55,12 +56,9 @@ export const Sidebar: React.FC = () => {
     { label: 'Freshness & SLA', to: '/aicte/freshness', icon: Clock },
     { label: 'Statutory Reports', to: '/aicte/reports', icon: FileSpreadsheet },
     { label: 'Analytics', to: '/aicte/analytics', icon: LineChart },
-    { label: 'Student Portal', to: '/student', icon: GraduationCap },
-    { label: 'Stakeholder Workspace', to: '/stakeholder', icon: Key },
-    { label: 'Public Verifier', to: '/verify', icon: QrCode },
   ];
 
-  const navItems = isAICTEAdmin() ? aicteNavItems : institutionNavItems;
+  const navItems = isAicteStaff ? aicteNavItems : institutionNavItems;
 
   return (
     <aside className="w-64 liquid-glass-dark text-slate-300 min-h-screen flex flex-col shrink-0 border-r border-slate-800/80 z-20 backdrop-blur-2xl">
@@ -74,7 +72,7 @@ export const Sidebar: React.FC = () => {
             APAAR Verify
           </span>
           <span className="text-[10px] text-indigo-300/80 font-bold tracking-wider uppercase">
-            {isAICTEAdmin() ? 'Central AICTE Apex' : 'Institution Node'}
+            {isAicteStaff ? 'Central AICTE Apex' : 'Institution Node'}
           </span>
         </div>
       </div>
@@ -82,7 +80,7 @@ export const Sidebar: React.FC = () => {
       {/* Nav Menu */}
       <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
         <div className="px-3 pb-2 text-[10px] font-bold text-slate-400/80 uppercase tracking-widest">
-          {isAICTEAdmin() ? 'Apex Regulatory Suite' : 'Academic Workspace'}
+          {isAicteStaff ? 'Apex Regulatory Suite' : 'Academic Workspace'}
         </div>
 
         {navItems.map((item) => {

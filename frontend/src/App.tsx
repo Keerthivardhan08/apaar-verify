@@ -48,7 +48,7 @@ import VerificationResult from './pages/verification/VerificationResult';
 
 // Root redirect handler
 const RootRedirect: React.FC = () => {
-  const { user, isAuthenticated, isLoading, isAICTEAdmin } = useAuth();
+  const { user, isAuthenticated, isLoading, isAICTEAdmin, isReviewer } = useAuth();
 
   if (isLoading) {
     return <LoadingSpinner fullScreen message="Loading session..." />;
@@ -75,7 +75,7 @@ const RootRedirect: React.FC = () => {
     return <Navigate to="/stakeholder" replace />;
   }
 
-  if (isAICTEAdmin()) {
+  if (isAICTEAdmin() || isReviewer()) {
     return <Navigate to="/aicte" replace />;
   }
 

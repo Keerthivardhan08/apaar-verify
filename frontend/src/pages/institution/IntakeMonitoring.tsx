@@ -57,8 +57,8 @@ export const IntakeMonitoring: React.FC = () => {
       sortable: true,
       render: (row) => (
         <div>
-          <span className="font-semibold text-gray-900 block">{row.program_name}</span>
-          <span className="text-[11px] text-gray-400 font-mono">{row.program_code}</span>
+          <span className="font-semibold text-gray-900 block">{row.program_name || 'Unnamed Program'}</span>
+          <span className="text-[11px] text-gray-400 font-mono">{row.program_code || 'N/A'}</span>
         </div>
       ),
     },
@@ -69,7 +69,7 @@ export const IntakeMonitoring: React.FC = () => {
       headerClassName: 'text-right',
       render: (row) => (
         <span className="font-mono text-gray-900 font-medium">
-          {row.approved_capacity !== undefined ? row.approved_capacity.toLocaleString() : 'Data unavailable'}
+          {row.approved_capacity != null ? Number(row.approved_capacity).toLocaleString() : 'Data unavailable'}
         </span>
       ),
     },
@@ -80,21 +80,21 @@ export const IntakeMonitoring: React.FC = () => {
       headerClassName: 'text-right',
       render: (row) => (
         <span className="font-mono text-indigo-700 font-bold">
-          {row.enrolled_count !== undefined ? row.enrolled_count.toLocaleString() : '0'}
+          {row.enrolled_count != null ? Number(row.enrolled_count).toLocaleString() : '0'}
         </span>
       ),
     },
     {
       key: 'utilization_pct',
       header: 'Utilization %',
-      render: (row) => getUtilizationBadge(row.utilization_pct || 0),
+      render: (row) => getUtilizationBadge(row.utilization_pct ?? 0),
     },
     {
       key: 'status',
       header: 'Compliance Status',
       render: (row) => (
         <span className="text-xs uppercase font-semibold tracking-wider text-gray-700">
-          {row.status || (row.utilization_pct > 100 ? 'CAPACITY_BREACH' : 'COMPLIANT')}
+          {row.status || ((row.utilization_pct ?? 0) > 100 ? 'CAPACITY_BREACH' : 'COMPLIANT')}
         </span>
       ),
     },
@@ -143,10 +143,10 @@ export const IntakeMonitoring: React.FC = () => {
         ) : (
           <EnrolmentChart
             data={intakeData.map((d) => ({
-              program_name: d.program_name,
-              enrolled: d.enrolled_count,
-              capacity: d.approved_capacity,
-              utilization_pct: d.utilization_pct,
+              program_name: d.program_name || 'Program',
+              enrolled: d.enrolled_count ?? 0,
+              capacity: d.approved_capacity ?? 0,
+              utilization_pct: d.utilization_pct ?? 0,
             }))}
             height={320}
           />

@@ -52,10 +52,16 @@ export class ErrorBoundary extends Component<Props, State> {
             </p>
 
             {this.state.error && (
-              <div className="p-3 bg-rose-50 rounded-lg text-left text-xs font-mono text-rose-800 break-all max-h-36 overflow-y-auto border border-rose-100">
+              <div className="p-3 bg-rose-50 rounded-lg text-left text-xs font-mono text-rose-800 break-all max-h-56 overflow-y-auto border border-rose-100">
                 <div className="font-bold mb-1">{this.state.error.name}: {this.state.error.message}</div>
                 {this.state.error.stack && (
-                  <pre className="text-[10px] text-rose-600 whitespace-pre-wrap">{this.state.error.stack.slice(0, 300)}...</pre>
+                  <pre className="text-[10px] text-rose-600 whitespace-pre-wrap">{this.state.error.stack.slice(0, 500)}</pre>
+                )}
+                {this.state.errorInfo?.componentStack && (
+                  <div className="mt-2 pt-2 border-t border-rose-200">
+                    <div className="font-bold text-[10px] text-rose-900">Component Stack:</div>
+                    <pre className="text-[10px] text-rose-700 whitespace-pre-wrap">{this.state.errorInfo.componentStack}</pre>
+                  </div>
                 )}
               </div>
             )}

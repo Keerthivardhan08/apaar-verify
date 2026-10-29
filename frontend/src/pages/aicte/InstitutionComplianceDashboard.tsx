@@ -106,8 +106,11 @@ export const InstitutionComplianceDashboard: React.FC = () => {
 
   const { institution, metrics, supernumerary_breakdown, category_distribution, programs, students } = data;
 
+  const safeStudents = students || [];
+  const safePrograms = programs || [];
+
   // Filter students roster
-  const filteredStudents = students.filter((s: ComplianceStudentRosterItem) => {
+  const filteredStudents = safeStudents.filter((s: ComplianceStudentRosterItem) => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const matchName = s.student_name.toLowerCase().includes(q);
@@ -131,27 +134,28 @@ export const InstitutionComplianceDashboard: React.FC = () => {
     return true;
   });
 
-  const getUtilizationBadge = (pct: number) => {
-    if (pct > 100) {
+  const getUtilizationBadge = (pct: number = 0) => {
+    const val = Number(pct || 0);
+    if (val > 100) {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
           <AlertOctagon className="w-3 h-3 mr-1" />
-          {pct.toFixed(1)}% (Breached)
+          {val.toFixed(1)}% (Breached)
         </span>
       );
     }
-    if (pct >= 80) {
+    if (val >= 80) {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
           <AlertTriangle className="w-3 h-3 mr-1" />
-          {pct.toFixed(1)}% (Near Capacity)
+          {val.toFixed(1)}% (Near Capacity)
         </span>
       );
     }
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
         <CheckCircle2 className="w-3 h-3 mr-1" />
-        {pct.toFixed(1)}% (Compliant)
+        {val.toFixed(1)}% (Compliant)
       </span>
     );
   };
@@ -484,30 +488,30 @@ export const InstitutionComplianceDashboard: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right font-mono font-bold text-gray-900">
-                    {prog.approved_capacity}
+                    {prog.approved_capacity != null ? prog.approved_capacity : '—'}
                   </td>
                   <td className="py-3 px-4 text-right font-mono font-bold text-indigo-700">
-                    {prog.enrolled_count}
+                    {prog.enrolled_count != null ? prog.enrolled_count : 0}
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex flex-col items-center">
                       <div className="w-24 bg-gray-200 rounded-full h-1.5 overflow-hidden mb-1">
                         <div
                           className={`h-1.5 rounded-full ${
-                            prog.utilization_pct > 100
+                            (prog.utilization_pct || 0) > 100
                               ? 'bg-rose-600'
-                              : prog.utilization_pct >= 80
+                              : (prog.utilization_pct || 0) >= 80
                               ? 'bg-amber-500'
                               : 'bg-emerald-600'
                           }`}
-                          style={{ width: `${Math.min(prog.utilization_pct, 100)}%` }}
+                          style={{ width: `${Math.min(prog.utilization_pct || 0, 100)}%` }}
                         />
                       </div>
-                      <span className="text-[11px] font-mono text-gray-600">{prog.utilization_pct}%</span>
+                      <span className="text-[11px] font-mono text-gray-600">{(prog.utilization_pct || 0).toFixed(1)}%</span>
                     </div>
                   </td>
                   <td className="py-3 px-4 text-center">
-                    {getUtilizationBadge(prog.utilization_pct)}
+                    {getUtilizationBadge(prog.utilization_pct || 0)}
                   </td>
                 </tr>
               ))}

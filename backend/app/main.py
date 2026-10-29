@@ -64,6 +64,18 @@ async def lifespan(app: FastAPI):
             seed()
         except Exception as e:
             print(f"Auto-seed note: {e}")
+
+        try:
+            from app.database import SessionLocal
+            from app.models.institution import Institution
+            with SessionLocal() as db_session:
+                has_dsce = db_session.query(Institution).filter(Institution.institution_code == "DSCE-BLR").first()
+            if not has_dsce:
+                print("Cloud Deployment Detected: Auto-seeding 58 colleges, branches & DSCE student records...")
+                from seed_expanded_colleges import run_seed
+                run_seed()
+        except Exception as e:
+            print(f"Expanded auto-seed note: {e}")
     yield
     # Cleanup on shutdown (if needed)
 

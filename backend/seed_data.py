@@ -379,6 +379,12 @@ def seed():
             {"name": "Meghana B.", "id": "DSCE-2026-IS001", "ident": "987654321014", "prog": prog_dsce_is, "cat": "general", "nri": "not_applicable"},
         ]
 
+        # Resolve operator users for audit trails
+        user_admin = db.query(User).filter(User.email == "admin@aicte.gov.in").first() or db.query(User).first()
+        user_dsce_op = db.query(User).filter(User.email == "operator@dsce.edu.in").first() or user_admin
+        user_iit_op = db.query(User).filter(User.email == "operator@dec.demo.ac.in").first() or user_admin
+        user_nit_op = db.query(User).filter(User.email == "operator@dec.demo.ac.in").first() or user_admin
+
         all_records = []
         for s in students_data:
             rec = StudentRecord(
